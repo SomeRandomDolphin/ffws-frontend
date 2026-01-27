@@ -6,34 +6,34 @@ Frontend web application for **Flood Forecasting Warning System – Dinas PU Sum
 
 ### Frontend
 
-* **React 18** (Create React App)
-* **React Router** – routing
-* **Axios** – API communication
-* **Chart.js & react-chartjs-2** – data visualization
-* **Leaflet & react-leaflet** – interactive maps
-* **Tailwind CSS** – styling
+- **React 18** (Create React App)
+- **React Router** – routing
+- **Axios** – API communication
+- **Chart.js & react-chartjs-2** – data visualization
+- **Leaflet & react-leaflet** – interactive maps
+- **Tailwind CSS** – styling
 
 ### Backend
 
-* **Laravel** (REST API)
-* **MySQL** – relational database
-* **Laravel Mix** – asset bundling
-* **Axios** – frontend-backend communication
+- **Laravel** (REST API)
+- **MySQL** – relational database
+- **Laravel Mix** – asset bundling
+- **Axios** – frontend-backend communication
 
 ### Machine Learning
 
-* **Python 3**
-* **TensorFlow & Keras** – deep learning models (LSTM, GRU, TCN)
-* **Flask** – ML inference API
-* **NumPy & Pandas** – data processing
-* **Scikit-learn** – evaluation & preprocessing
-* **SQLAlchemy** – database ORM
-* **Gunicorn** – production WSGI server
+- **Python 3**
+- **TensorFlow & Keras** – deep learning models (LSTM, GRU, TCN)
+- **Flask** – ML inference API
+- **NumPy & Pandas** – data processing
+- **Scikit-learn** – evaluation & preprocessing
+- **SQLAlchemy** – database ORM
+- **Gunicorn** – production WSGI server
 
 ## Requirements
 
-* **Node.js** >= 16.x (recommended)
-* **npm** or **yarn**
+- **Node.js** >= 16.x (recommended)
+- **npm** or **yarn**
 
 ## Getting Started
 
@@ -81,13 +81,13 @@ http://localhost:3000
 
 ## Available Scripts
 
-* **Start development server**
+- **Start development server**
 
 ```bash
 npm start
 ```
 
-* **Build for production**
+- **Build for production**
 
 ```bash
 npm run build
@@ -95,13 +95,13 @@ npm run build
 
 Generates an optimized production build in the `build/` folder.
 
-* **Run tests**
+- **Run tests**
 
 ```bash
 npm test
 ```
 
-* **Eject (advanced)**
+- **Eject (advanced)**
 
 ```bash
 npm run eject
@@ -111,25 +111,25 @@ npm run eject
 
 ## Project Features
 
-* Real-time and historical water level visualization
-* Rainfall and flood forecasting charts
-* Interactive river and monitoring station maps
-* Responsive dashboard UI
+- Real-time and historical water level visualization
+- Rainfall and flood forecasting charts
+- Interactive river and monitoring station maps
+- Responsive dashboard UI
 
 ## Build & Deployment Notes
 
-* The project uses **Create React App** with `homepage` set to `.` for relative paths.
-* After running `npm run build`, deploy the contents of the `build/` directory to your web server.
+- The project uses **Create React App** with `homepage` set to `.` for relative paths.
+- After running `npm run build`, deploy the contents of the `build/` directory to your web server.
 
 ## Related Repositories
 
-* **FFWS Frontend**
+- **FFWS Frontend**
   [https://github.com/SomeRandomDolphin/ffws-frontend](https://github.com/SomeRandomDolphin/ffws-frontend)
 
-* **FFWS Backend**
+- **FFWS Backend**
   [https://github.com/SomeRandomDolphin/ffws-backend](https://github.com/SomeRandomDolphin/ffws-backend)
 
-* **FFWS Machine Learning**
+- **FFWS Machine Learning**
   [https://github.com/SomeRandomDolphin/ffws-ml](https://github.com/SomeRandomDolphin/ffws-ml)
 
 The frontend consumes REST APIs from the backend service, while the backend integrates with the ML service for flood level forecasting and analytics.
