@@ -1,70 +1,139 @@
-# Getting Started with Create React App
+## About Repository
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Frontend web application for **Flood Forecasting Warning System – Dinas PU Sumber Daya Air Jawa Timur**. This repository contains the web monitoring dashboard used to visualize water level, rainfall, and forecasting results from the backend and machine learning services.
+
+## Tech Stack
+
+### Frontend
+
+* **React 18** (Create React App)
+* **React Router** – routing
+* **Axios** – API communication
+* **Chart.js & react-chartjs-2** – data visualization
+* **Leaflet & react-leaflet** – interactive maps
+* **Tailwind CSS** – styling
+
+### Backend
+
+* **Laravel** (REST API)
+* **MySQL** – relational database
+* **Laravel Mix** – asset bundling
+* **Axios** – frontend-backend communication
+
+### Machine Learning
+
+* **Python 3**
+* **TensorFlow & Keras** – deep learning models (LSTM, GRU, TCN)
+* **Flask** – ML inference API
+* **NumPy & Pandas** – data processing
+* **Scikit-learn** – evaluation & preprocessing
+* **SQLAlchemy** – database ORM
+* **Gunicorn** – production WSGI server
+
+## Requirements
+
+* **Node.js** >= 16.x (recommended)
+* **npm** or **yarn**
+
+## Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/SomeRandomDolphin/ffws-frontend
+```
+
+### 2. Install dependencies
+
+Using npm:
+
+```bash
+npm install
+```
+
+Or using yarn:
+
+```bash
+yarn install
+```
+
+### 3. Configure environment (optional but recommended)
+
+Create a `.env` file in the root directory and set your backend API base URL:
+
+```env
+REACT_APP_API_BASE_URL=http://localhost:8000/api
+```
+
+> Adjust the URL based on your backend deployment.
+
+### 4. Run the development server
+
+```bash
+npm start
+```
+
+The app will be available at:
+
+```
+http://localhost:3000
+```
 
 ## Available Scripts
 
-In the project directory, you can run:
+* **Start development server**
 
-### `npm start`
+```bash
+npm start
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+* **Build for production**
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```bash
+npm run build
+```
 
-### `npm test`
+Generates an optimized production build in the `build/` folder.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+* **Run tests**
 
-### `npm run build`
+```bash
+npm test
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+* **Eject (advanced)**
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+npm run eject
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+> ⚠️ This is irreversible. Use only if you need full control over the configuration.
 
-### `npm run eject`
+## Project Features
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+* Real-time and historical water level visualization
+* Rainfall and flood forecasting charts
+* Interactive river and monitoring station maps
+* Responsive dashboard UI
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Build & Deployment Notes
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+* The project uses **Create React App** with `homepage` set to `.` for relative paths.
+* After running `npm run build`, deploy the contents of the `build/` directory to your web server.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Related Repositories
 
-## Learn More
+* **FFWS Frontend**
+  [https://github.com/SomeRandomDolphin/ffws-frontend](https://github.com/SomeRandomDolphin/ffws-frontend)
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+* **FFWS Backend**
+  [https://github.com/SomeRandomDolphin/ffws-backend](https://github.com/SomeRandomDolphin/ffws-backend)
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+* **FFWS Machine Learning**
+  [https://github.com/SomeRandomDolphin/ffws-ml](https://github.com/SomeRandomDolphin/ffws-ml)
 
-### Code Splitting
+The frontend consumes REST APIs from the backend service, while the backend integrates with the ML service for flood level forecasting and analytics.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## License
 
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+This project is for government and research use under the Flood Forecasting Warning System initiative.
