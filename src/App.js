@@ -25,7 +25,7 @@ function App() {
       },
       { path: "*", element: <NotFound /> },
     ],
-    { basename: "/ffwsview" },
+    { basename: "/tsipil/informasibanjir/ffws" },
   );
   return <RouterProvider router={router} />;
 }
