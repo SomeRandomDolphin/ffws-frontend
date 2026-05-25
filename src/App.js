@@ -8,6 +8,9 @@ import Admin from "./pages/admin/Admin.js";
 import NotFound from "./components/NotFound.js";
 import PrivateRoute from "./private-route/PrivateRoute";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
+
+const basename = process.env.PUBLIC_URL || "/tsipil/informasibanjir/ffws";
+
 function App() {
   const router = createBrowserRouter(
     [
@@ -25,7 +28,7 @@ function App() {
       },
       { path: "*", element: <NotFound /> },
     ],
-    { basename: "/tsipil/informasibanjir/ffws" },
+    { basename },
   );
   return <RouterProvider router={router} />;
 }
