@@ -9,10 +9,7 @@ import {
   Filler,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-import { useStatistic } from "../../../hooks/useStatistic";
-import { useAuthContext } from "../../../hooks/useAuthContext";
-import { useEffect, useState } from "react";
-import { useGetDate } from "../../../hooks/useGetDateTime";
+
 ChartJs.register(
   LineElement,
   PointElement,
@@ -61,7 +58,6 @@ const CrossDesign = ({ levelAir }) => {
           }
           const {
             ctx,
-            data,
             chartArea: { top, bottom },
           } = context.chart;
           const gradientBg = ctx.createLinearGradient(0, top, 0, bottom);
@@ -86,7 +82,6 @@ const CrossDesign = ({ levelAir }) => {
           }
           const {
             ctx,
-            data,
             chartArea: { top, bottom },
           } = context.chart;
           const gradientBg = ctx.createLinearGradient(0, top, 0, bottom);
@@ -129,7 +124,7 @@ const CrossDesign = ({ levelAir }) => {
           text: "Tinggi Air (m)",
           color: "black",
         },
-        suggestedMax: Math.max(...data.datasets[0].data) + 2,
+        suggestedMax: Math.max(...data.datasets[0].data.map((v) => v ?? 0)) + 2,
         suggestedMin: 0,
         grid: {
           color: "rgba(0,0,0,.05)",

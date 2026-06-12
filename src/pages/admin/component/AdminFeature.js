@@ -58,6 +58,7 @@ const AdminFeature = ({ user }) => {
       }
     };
     loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stasiun]);
 
   return (
@@ -153,7 +154,7 @@ const AdminFeature = ({ user }) => {
           )}
         </div>
         <p className="text-red-700 text-xs">
-          {error && error.response.data.message}
+          {error && (error.response?.data?.message || error.message || "Terjadi kesalahan.")}
         </p>
       </div>
 

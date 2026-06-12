@@ -35,9 +35,11 @@ function App() {
 
 const Wrapper = ({ child }) => {
   return (
-    <div className="App font-sans flex w-screen h-screen overflow-auto font-sans">
+    <div className="App flex min-h-screen w-full bg-zinc-50 font-sans text-zinc-900">
       <Navbar />
-      <div className="p-5 w-full">{child}</div>
+      <main className="min-w-0 flex-1 px-4 pb-8 pt-20 sm:px-6 lg:h-screen lg:overflow-y-auto lg:px-8 lg:py-6">
+        <div className="mx-auto w-full max-w-[1600px]">{child}</div>
+      </main>
     </div>
   );
 };

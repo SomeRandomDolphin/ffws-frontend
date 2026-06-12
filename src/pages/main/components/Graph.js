@@ -14,6 +14,7 @@ import { useAuthContext } from "../../../hooks/useAuthContext";
 import { useEffect, useState } from "react";
 import { useGetDate } from "../../../hooks/useGetDateTime";
 import Loading from "../../../components/Loading";
+import StateMessage from "../../../components/StateMessage";
 ChartJs.register(
   LineElement,
   PointElement,
@@ -53,7 +54,6 @@ const Graph = ({ params, setters }) => {
           }
           const {
             ctx,
-            data,
             chartArea: { top, bottom },
           } = context.chart;
           const gradientBg = ctx.createLinearGradient(0, top, 0, bottom);
@@ -80,7 +80,6 @@ const Graph = ({ params, setters }) => {
           }
           const {
             ctx,
-            data,
             chartArea: { top, bottom },
           } = context.chart;
           const gradientBg = ctx.createLinearGradient(0, top, 0, bottom);
@@ -166,16 +165,12 @@ const Graph = ({ params, setters }) => {
       let tempPred = [];
       let tempAct = [];
       let tempDate = [];
-      let aktual = "Tidak ada";
-      let prediksi = "Tidak ada";
-      if (res) {
-        res.data.map((item) => {
-          if (item.aktual) {
-            aktual = item.aktual;
-          }
-          if (item.prediksi) {
-            prediksi = item.prediksi;
-          }
+      let aktual = null;
+      let prediksi = null;
+      if (Array.isArray(res?.data)) {
+        res.data.forEach((item) => {
+          if (item.aktual != null) aktual = item.aktual;
+          if (item.prediksi != null) prediksi = item.prediksi;
           tempAct.push(item.aktual);
           tempPred.push(item.prediksi);
           tempDate.push(item.tanggal);
@@ -190,13 +185,25 @@ const Graph = ({ params, setters }) => {
       }
     };
     handleLoadChartData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [model, daerah, periode]);
 
   return (
     <div className="h-full">
-      <div className="h-[250px]">
+      <div className="h-[280px] sm:h-[320px]">
         {isLoading ? (
           <Loading size={"30px"} color="#000000" />
+        ) : error ? (
+          <StateMessage
+            tone="error"
+            title="Grafik tidak dapat dimuat"
+            message={error.response?.data?.message || error.message}
+          />
+        ) : dates.length === 0 ? (
+          <StateMessage
+            title="Belum ada data grafik"
+            message="Data aktual dan prediksi belum tersedia untuk periode ini."
+          />
         ) : (
           <Line data={data} options={options}></Line>
         )}
