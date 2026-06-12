@@ -2,14 +2,12 @@ import ElevasiMukaAir from "./components/ElevasiMukaAir";
 import LevelMukaAir from "./components/LevelMukaAir";
 import Status from "./components/Status";
 import Graph from "./components/Graph";
-import Graph2 from "./components/Graph2";
 import CrossDesign from "./components/CrossDesign";
 import { AiOutlineLineChart } from "react-icons/ai";
 import { CiImageOn } from "react-icons/ci";
 import { AiOutlineControl } from "react-icons/ai";
 import { IoStatsChart } from "react-icons/io5";
 import { IoIosTimer } from "react-icons/io";
-import { MdEngineering } from "react-icons/md";
 import { FaHandsClapping, FaTableCells } from "react-icons/fa6";
 import { useEffect, useState } from "react";
 import { useAuthContext } from "../../hooks/useAuthContext";
@@ -65,7 +63,10 @@ const Main = () => {
     const id = stasiun === "Dhompo" ? 1 : 2;
     getStasiunLimitAir("rand", id)
       .then((res) => {
-        const { batas_air_siaga, batas_air_awas } = res.data || [-1, -1];
+        const { batas_air_siaga, batas_air_awas } = res?.data || {
+          batas_air_siaga: -1,
+          batas_air_awas: -1,
+        };
         setLimitAir([batas_air_siaga, batas_air_awas]);
       })
       .catch();
@@ -73,11 +74,14 @@ const Main = () => {
     const loadData = async () => {
       let stasiunName = "Cendono";
       let res = await getSensorHistory("def", 0, 1, stasiunName);
-      res = res.data.history[0];
-      const curah_hujan =
-        stasiunName === "Cendono"
-          ? res.curah_hujan_cendono
-          : res.curah_hujan_lawang;
+      let curah_hujan = 0;
+      if (res && res.data && Array.isArray(res.data.history) && res.data.history.length > 0) {
+        const historyItem = res.data.history[0];
+        curah_hujan =
+          stasiunName === "Cendono"
+            ? historyItem.curah_hujan_cendono
+            : historyItem.curah_hujan_lawang;
+      }
 
       let roundedValue;
 
@@ -116,6 +120,7 @@ const Main = () => {
       }
     };
     loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -145,6 +150,7 @@ const Main = () => {
           <a
             href="https://api.whatsapp.com/send?phone=34621371153&text=I%20allow%20callmebot%20to%20send%20me%20messages"
             target="_blank"
+            rel="noreferrer"
             style={{ color: "red" }}
           >
             KLIK DISINI

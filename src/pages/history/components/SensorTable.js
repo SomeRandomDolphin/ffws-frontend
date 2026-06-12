@@ -6,7 +6,6 @@ import {
   BsChevronRight,
   BsFillCalendarDayFill,
   BsFillClockFill,
-  BsGraphUp,
 } from "react-icons/bs";
 import Loading from "../../../components/Loading";
 
@@ -24,12 +23,15 @@ const SensorTable = ({ user, stasiun }) => {
   const handleLoadSensorData = async () => {
     const token = user ? user.authorization.token : "def";
     const data = await getSensorHistory(token, pageIndex * 10, 10, stasiun);
-    setSensorData(data.data.history);
-    setTotalLength(data.data.total_count);
+    if (data && data.data) {
+      setSensorData(data.data.history);
+      setTotalLength(data.data.total_count);
+    }
   };
 
   useEffect(() => {
     handleLoadSensorData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageIndex]);
 
   if (sensorData) {
@@ -116,7 +118,7 @@ const SensorTable = ({ user, stasiun }) => {
   } else if (isLoading) {
     return <Loading size={"30px"} />;
   } else if (error) {
-    return <div className="text-red-700">{error.response.data.message}</div>;
+    return <div className="text-red-700">{error.response?.data?.message || error.message || "Gagal memuat data sensor."}</div>;
   }
 };
 

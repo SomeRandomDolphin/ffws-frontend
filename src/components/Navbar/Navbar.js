@@ -20,13 +20,13 @@ const Navbar = () => {
     const newStates = states.map((_, ind) => ind === i);
     setStates(newStates);
     if (location.startsWith("/dashboard")) {
-      if (stasiun == "Dhompo" || stasiun == "Purwodadi") {
+      if (stasiun === "Dhompo" || stasiun === "Purwodadi") {
         navigate(`${location}/${stasiun}`);
       } else {
         navigate(`${location}/Dhompo`);
       }
     } else if (location.startsWith("/history")) {
-      if (stasiun == "Cendono" || stasiun == "Lawang") {
+      if (stasiun === "Cendono" || stasiun === "Lawang") {
         navigate(`${location}/${stasiun}`);
       } else {
         navigate(`${location}/Cendono`);

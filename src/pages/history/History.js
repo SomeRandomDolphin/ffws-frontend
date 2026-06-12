@@ -19,6 +19,7 @@ const History = () => {
     if (stasiun !== "Cendono" && stasiun !== "Lawang") {
       navigate("/not-found");
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

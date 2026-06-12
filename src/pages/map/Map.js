@@ -8,7 +8,11 @@ import { useGetData } from "../../hooks/useGetData";
 
 const MarkerCustom = ({ text, color }) => {
   const navigate = useNavigate();
-  const handleNavigate = () => {
+  const handleNavigate = (e) => {
+    if (e) {
+      if (typeof e.stopPropagation === "function") e.stopPropagation();
+      if (typeof e.preventDefault === "function") e.preventDefault();
+    }
     if (text.startsWith("AWLR") || text.startsWith("awlr")) {
       navigate(`/dashboard/${text.split(" ")[1]}`);
     } else {
@@ -144,7 +148,6 @@ const Map = () => {
   const { getChartData } = useStatistic();
   const { getStasiunLimitAir, getSensorHistory } = useGetData();
 
-  console.log(aktualData);
 
   useEffect(() => {
     const loadData = async () => {
@@ -165,16 +168,17 @@ const Map = () => {
               "def",
               stasiunName === "Dhompo" ? 1 : 2,
             );
-            const { batas_air_siaga, batas_air_awas } = resLimitAir.data || [
-              -1, -1,
-            ];
+            const { batas_air_siaga, batas_air_awas } = resLimitAir?.data || {
+              batas_air_siaga: -1,
+              batas_air_awas: -1,
+            };
             let newLimitAir = limitAir;
             newLimitAir[item] = [batas_air_siaga, batas_air_awas];
             setLimitAir(newLimitAir);
 
             let aktual = -1;
-            if (res) {
-              res.data.map((item) => {
+            if (res && Array.isArray(res.data)) {
+              res.data.forEach((item) => {
                 if (item.aktual) {
                   aktual = item.aktual;
                 }
@@ -186,13 +190,17 @@ const Map = () => {
             setAktualData(newData);
           } else {
             let res = await getSensorHistory("def", 0, 1, stasiunName);
-            res = res.data.history[0];
+            let curah_hujan = 0;
+            if (res && res.data && Array.isArray(res.data.history) && res.data.history.length > 0) {
+              const historyItem = res.data.history[0];
+              curah_hujan =
+                stasiunName === "Cendono"
+                  ? historyItem.curah_hujan_cendono
+                  : historyItem.curah_hujan_lawang;
+            }
 
             let newData = aktualData;
-            newData[item] =
-              stasiunName === "Cendono"
-                ? res.curah_hujan_cendono
-                : res.curah_hujan_lawang;
+            newData[item] = curah_hujan;
             setAktualData(newData);
           }
         }),
@@ -203,6 +211,7 @@ const Map = () => {
 
     // call the functions
     loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

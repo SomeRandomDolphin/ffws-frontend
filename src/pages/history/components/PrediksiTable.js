@@ -32,6 +32,7 @@ const PrediksiTable = ({ user }) => {
 
   useEffect(() => {
     handleLoadPredictionHistory();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageIndex]);
 
   if (prediksi) {
@@ -130,7 +131,7 @@ const PrediksiTable = ({ user }) => {
     return <Loading size={"30px"} />;
   } else if (error) {
     return (
-      <div className="text-red-700">{error && error.response.data.message}</div>
+      <div className="text-red-700">{error.response?.data?.message || error.message || "Gagal memuat data prediksi."}</div>
     );
   }
 };

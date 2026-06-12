@@ -169,7 +169,7 @@ const Graph = ({ params, setters }) => {
       let aktual = "Tidak ada";
       let prediksi = "Tidak ada";
       if (res) {
-        res.data.map((item) => {
+        res.data.forEach((item) => {
           if (item.aktual) {
             aktual = item.aktual;
           }
@@ -190,6 +190,7 @@ const Graph = ({ params, setters }) => {
       }
     };
     handleLoadChartData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [model, daerah, periode]);
 
   return (

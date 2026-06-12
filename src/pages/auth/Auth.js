@@ -14,7 +14,7 @@ const Auth = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     // call the api
-    const res = await login(email, password);
+    await login(email, password);
     setEmail("");
     setPassword("");
   };
@@ -22,7 +22,7 @@ const Auth = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     // call the api
-    const res = await register(username, email, password);
+    await register(username, email, password);
     setUsername("");
     setEmail("");
     setPassword("");

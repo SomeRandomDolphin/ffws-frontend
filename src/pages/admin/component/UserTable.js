@@ -8,7 +8,7 @@ const UserTable = ({ user }) => {
   const [openModal, setOpenModal] = useState(false);
   const [modalType, setModalType] = useState(null);
 
-  const { getAllUsers, addKontak, updateKontak, isLoading, error } = useAdmin();
+  const { getAllUsers, addKontak, updateKontak, error } = useAdmin();
   const handleLoadUser = async () => {
     const res = await getAllUsers(user.authorization.token);
     if (res) {
@@ -87,6 +87,7 @@ const UserTable = ({ user }) => {
   useEffect(() => {
     handleLoadUser();
     setUpdate(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [update]);
 
   return (
