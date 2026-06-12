@@ -18,6 +18,8 @@ const STATION_COORDS = {
   Dhompo: [-7.657989032817421, 112.86132803433979],
 };
 
+const DASHBOARD_STATIONS = ["Dhompo", "Purwodadi"];
+
 const PanelTitle = ({ icon: Icon, title, description }) => (
   <div className="text-left">
     <div className="flex items-center gap-3">
@@ -43,10 +45,17 @@ const Main = () => {
   const [chartData, setChartData] = useState([]);
 
   useEffect(() => {
-    if (!["Dhompo", "Purwodadi"].includes(stasiun)) {
+    if (!DASHBOARD_STATIONS.includes(stasiun)) {
       navigate("/not-found");
       return;
     }
+
+    setPeriod(1);
+    setAktualAir(null);
+    setPrediksiAir(null);
+    setChartData([]);
+    setLimits(null);
+
     const load = async () => {
       const [limitResponse, rainResponse] = await Promise.all([
         getStasiunLimitAir("def", stasiun === "Dhompo" ? 1 : 2),
@@ -92,7 +101,7 @@ const Main = () => {
 
   return (
     <div className="space-y-5 text-left">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">
             AWLR {stasiun}
@@ -104,14 +113,41 @@ const Main = () => {
             Kondisi aktual dan prediksi muka air pada stasiun {stasiun}.
           </p>
         </div>
-        <a
-          href="https://api.whatsapp.com/send?phone=34621371153&text=I%20allow%20callmebot%20to%20send%20me%20messages"
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
-        >
-          Aktifkan notifikasi WhatsApp
-        </a>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div>
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Pilih stasiun
+            </p>
+            <div
+              className="inline-flex w-full rounded-xl border bg-white p-1 shadow-sm sm:w-auto"
+              role="group"
+              aria-label="Pilih stasiun AWLR"
+            >
+              {DASHBOARD_STATIONS.map((station) => {
+                const active = station === stasiun;
+                return (
+                  <button
+                    key={station}
+                    type="button"
+                    onClick={() => navigate(`/dashboard/${station}`)}
+                    aria-pressed={active}
+                    className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition-colors sm:flex-none ${active ? "bg-zinc-900 text-white shadow-sm" : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"}`}
+                  >
+                    {station}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <a
+            href="https://api.whatsapp.com/send?phone=34621371153&text=I%20allow%20callmebot%20to%20send%20me%20messages"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex min-h-[42px] items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+          >
+            Aktifkan notifikasi WhatsApp
+          </a>
+        </div>
       </header>
 
       <WeatherCard
