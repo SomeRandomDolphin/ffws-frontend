@@ -14,6 +14,14 @@ import { useAuthContext } from "../../hooks/useAuthContext";
 import { useGetDate } from "../../hooks/useGetDateTime";
 import { useNavigate, useParams } from "react-router-dom";
 import { useGetData } from "../../hooks/useGetData";
+import WeatherCard from "./components/WeatherCard";
+
+// Station coordinates (lat, lon) — must match Map.js stasiun definitions
+const STATION_COORDS = {
+  Purwodadi: [-7.80483304165883, 112.74396200866504],
+  Dhompo: [-7.657989032817421, 112.86132803433979],
+};
+
 const Main = () => {
   const currentDate = new Date();
   const { stasiun } = useParams();
@@ -156,6 +164,14 @@ const Main = () => {
             KLIK DISINI
           </a>
         </div>
+      </div>
+      {/* Weather Card */}
+      <div className="mb-5">
+        <WeatherCard
+          lat={STATION_COORDS[stasiun]?.[0]}
+          lon={STATION_COORDS[stasiun]?.[1]}
+          stationName={stasiun}
+        />
       </div>
       <div className="grid grid-rows-12">
         <div className="row-span-1 flex">

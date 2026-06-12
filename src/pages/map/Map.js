@@ -1,10 +1,12 @@
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, LayersControl, GeoJSON } from "react-leaflet";
 import { useState, useMemo, useId, useEffect } from "react";
 import { createPortal } from "react-dom";
 import L from "leaflet";
 import { useNavigate } from "react-router-dom";
 import { useStatistic } from "../../hooks/useStatistic";
 import { useGetData } from "../../hooks/useGetData";
+import { useRainViewer } from "../../hooks/useRainViewer";
+import { useInundation } from "../../hooks/useInundation";
 
 const MarkerCustom = ({ text, color }) => {
   const navigate = useNavigate();
@@ -145,8 +147,12 @@ const Map = () => {
   const [loading, setIsLoading] = useState(true);
   const [aktualData, setAktualData] = useState({});
   const [limitAir, setLimitAir] = useState({});
+  const [showRadar, setShowRadar] = useState(false);
+  const [showInundation, setShowInundation] = useState(false);
   const { getChartData } = useStatistic();
   const { getStasiunLimitAir, getSensorHistory } = useGetData();
+  const { tileUrl: radarTileUrl, isLoading: radarLoading } = useRainViewer();
+  const { geoJsonData, isLoading: inundationLoading } = useInundation();
 
 
   useEffect(() => {
@@ -228,6 +234,31 @@ const Map = () => {
         Petunjuk : untuk melihat peramalan dan peringatan dini di stasiun
         monitoring, silakan klik titik stasiun monitoring yang diinginkan
       </p>
+      {/* Map Layer Toggle Buttons */}
+      <div className="flex gap-2 my-2 flex-wrap">
+        <button
+          onClick={() => setShowRadar((v) => !v)}
+          disabled={radarLoading}
+          className={`text-xs px-3 py-1 rounded-full border font-medium transition-colors ${
+            showRadar
+              ? "bg-blue-600 text-white border-blue-600"
+              : "bg-white text-blue-600 border-blue-400 hover:bg-blue-50"
+          } ${radarLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        >
+          🌧️ {showRadar ? "Sembunyikan Radar" : "Tampilkan Radar BMKG"}
+        </button>
+        <button
+          onClick={() => setShowInundation((v) => !v)}
+          disabled={inundationLoading}
+          className={`text-xs px-3 py-1 rounded-full border font-medium transition-colors ${
+            showInundation
+              ? "bg-indigo-600 text-white border-indigo-600"
+              : "bg-white text-indigo-600 border-indigo-400 hover:bg-indigo-50"
+          } ${inundationLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        >
+          🌊 {showInundation ? "Sembunyikan Genangan" : "Tampilkan Peta Genangan"}
+        </button>
+      </div>
       <div className="w-full">
         <MapContainer
           center={[defaultProps.center.lat, defaultProps.center.lng]}
@@ -235,10 +266,53 @@ const Map = () => {
           scrollWheelZoom={false}
           style={{ height: "50vh" }}
         >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
+          {/* DEM Layer Control — switches between Street Map and Topography */}
+          <LayersControl position="topright">
+            <LayersControl.BaseLayer checked name="Peta Jalan (OpenStreetMap)">
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+            </LayersControl.BaseLayer>
+            <LayersControl.BaseLayer name="Topografi / DEM (OpenTopoMap)">
+              <TileLayer
+                attribution='&copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+                url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+              />
+            </LayersControl.BaseLayer>
+          </LayersControl>
+
+          {/* Radar Overlay — RainViewer live precipitation tiles */}
+          {showRadar && radarTileUrl && (
+            <TileLayer
+              url={radarTileUrl}
+              opacity={0.6}
+              attribution='Radar &copy; <a href="https://www.rainviewer.com">RainViewer</a>'
+              zIndex={500}
+            />
+          )}
+
+          {/* Inundation GeoJSON — demo flood zone polygons */}
+          {showInundation && geoJsonData && (
+            <GeoJSON
+              key={JSON.stringify(geoJsonData)}
+              data={geoJsonData}
+              style={(feature) => ({
+                color: feature?.properties?.color ?? "#3b82f6",
+                fillColor: feature?.properties?.fillColor ?? "#93c5fd",
+                fillOpacity: 0.4,
+                weight: 2,
+              })}
+              onEachFeature={(feature, layer) => {
+                if (feature.properties?.name) {
+                  layer.bindPopup(
+                    `<b>${feature.properties.name}</b><br/>${feature.properties.description ?? ""}`
+                  );
+                }
+              }}
+            />
+          )}
+
           {!loading &&
             Object.keys(stasiun).map((item, i) => (
               <EnhancedMarker
