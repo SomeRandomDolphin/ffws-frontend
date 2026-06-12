@@ -1,5 +1,10 @@
-import { useState, useEffect } from "react";
-import { AiFillHome, AiOutlineHistory } from "react-icons/ai";
+import { useEffect, useState } from "react";
+import {
+  AiFillHome,
+  AiOutlineClose,
+  AiOutlineHistory,
+  AiOutlineMenu,
+} from "react-icons/ai";
 import { RiAdminFill } from "react-icons/ri";
 import { LuLayoutDashboard } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -7,113 +12,137 @@ import { useAuthContext } from "../../hooks/useAuthContext";
 import { useLogout } from "../../hooks/useLogout";
 
 const Navbar = () => {
-  const [states, setStates] = useState([true, false, false, false]);
+  const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const styleIncative = "text-zinc-500 font-medium hover:bg-zinc-200";
-  const styleActive = "text-black font-medium bg-zinc-200";
   const navigate = useNavigate();
   const { stasiun } = useParams();
   const { user } = useAuthContext();
   const { logout } = useLogout();
 
-  const stateHandler = (location, i) => {
-    const newStates = states.map((_, ind) => ind === i);
-    setStates(newStates);
-    if (location.startsWith("/dashboard")) {
-      if (stasiun === "Dhompo" || stasiun === "Purwodadi") {
-        navigate(`${location}/${stasiun}`);
-      } else {
-        navigate(`${location}/Dhompo`);
-      }
-    } else if (location.startsWith("/history")) {
-      if (stasiun === "Cendono" || stasiun === "Lawang") {
-        navigate(`${location}/${stasiun}`);
-      } else {
-        navigate(`${location}/Cendono`);
-      }
-    } else {
-      navigate(location);
-    }
-  };
+  const items = [
+    {
+      label: "Utama",
+      path: "/",
+      icon: AiFillHome,
+      active: location.pathname === "/",
+    },
+    {
+      label: "Dashboard",
+      path: `/dashboard/${["Dhompo", "Purwodadi"].includes(stasiun) ? stasiun : "Dhompo"}`,
+      icon: LuLayoutDashboard,
+      active: location.pathname.startsWith("/dashboard"),
+    },
+    {
+      label: "Riwayat",
+      path: `/history/${["Cendono", "Lawang"].includes(stasiun) ? stasiun : "Cendono"}`,
+      icon: AiOutlineHistory,
+      active: location.pathname.startsWith("/history"),
+    },
+  ];
 
-  const handleLogout = () => {
-    logout(user.authorization.token);
-  };
+  if (user?.user?.role === Number(process.env.REACT_APP_ADMIN_ROLE)) {
+    items.push({
+      label: "Admin",
+      path: "/admin",
+      icon: RiAdminFill,
+      active: location.pathname === "/admin",
+    });
+  }
+
+  useEffect(() => setIsOpen(false), [location.pathname]);
 
   useEffect(() => {
-    const mapButton = [
-      "/" === location.pathname ? true : false,
-      "/dashboard/Dhompo" === location.pathname ||
-      "/dashboard/Purwodadi" === location.pathname
-        ? true
-        : false,
-      "/history/Cendono" === location.pathname ||
-      "/history/Lawang" === location.pathname
-        ? true
-        : false,
-      "/admin" === location.pathname ? true : false,
-    ];
-    setStates(mapButton);
-  }, [location]);
+    const closeOnEscape = (event) => event.key === "Escape" && setIsOpen(false);
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, []);
 
-  return (
-    <div className="h-screen w-[250px] py-7 px-5 bg-white flex flex-col border-r">
-      <div className="flex flex-col flex-auto">
-        <p className="text-zinc-500 font-semibold text-xs text-left">
-          MENU UTAMA
+  const goTo = (path) => navigate(path);
+  const handleLogout = () => logout(user.authorization.token);
+
+  const navigation = (
+    <div className="flex h-full flex-col">
+      <div className="border-b px-5 py-5">
+        <p className="text-lg font-bold tracking-tight">FFWS Welang</p>
+        <p className="mt-1 text-xs text-zinc-500">
+          Monitoring dan peringatan banjir
         </p>
-        <ul className="py-3">
-          <li
-            onClick={() => stateHandler("/", 0)}
-            className={`${!states[0] ? styleIncative : styleActive} flex items-center w-full cursor-pointer px-3 py-1 rounded-lg my-1 `}
-          >
-            <AiFillHome className="mr-2" />
-            Utama
-          </li>
-          <li
-            onClick={() => stateHandler("/dashboard", 1)}
-            className={`${!states[1] ? styleIncative : styleActive} flex items-center w-full cursor-pointer px-3 py-1 rounded-lg my-1 `}
-          >
-            <LuLayoutDashboard className="mr-2" />
-            Dashboard
-          </li>
-          <li
-            onClick={() => stateHandler("/history", 2)}
-            className={`${!states[2] ? styleIncative : styleActive} flex items-center w-full cursor-pointer px-3 py-1 rounded-lg my-1 `}
-          >
-            <AiOutlineHistory className="mr-2" />
-            History
-          </li>
-          {user &&
-            user.user.role === Number(process.env.REACT_APP_ADMIN_ROLE) && (
-              <li
-                onClick={() => stateHandler("/admin", 3)}
-                className={`${!states[3] ? styleIncative : styleActive} flex items-center w-full cursor-pointer px-3 py-1 rounded-lg my-1 `}
+      </div>
+      <nav className="flex-1 p-4" aria-label="Menu utama">
+        <p className="mb-2 px-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-400">
+          Menu utama
+        </p>
+        <ul className="space-y-1">
+          {items.map(({ label, path, icon: Icon, active }) => (
+            <li key={label}>
+              <button
+                type="button"
+                onClick={() => goTo(path)}
+                className={`flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors ${active ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"}`}
               >
-                <RiAdminFill className="mr-2" />
-                Admin
-              </li>
-            )}
+                <Icon className="mr-3" aria-hidden="true" />
+                {label}
+              </button>
+            </li>
+          ))}
         </ul>
-        <div className="">
-          {user ? (
-            <button
-              onClick={handleLogout}
-              className="rounded-md text-zinc-300 w-full bg-red-700 hover:text-white font-medium text-sm py-1"
-            >
-              LOGOUT
-            </button>
-          ) : (
-            <button
-              onClick={() => navigate("/auth")}
-              className="rounded-md w-full bg-black text-white hover:bg-gray-700 font-medium text-sm py-1"
-            >
-              LOGIN AS ADMIN
-            </button>
-          )}
-        </div>
+      </nav>
+      <div className="border-t p-4">
+        <button
+          type="button"
+          onClick={user ? handleLogout : () => goTo("/auth")}
+          className={`w-full rounded-lg px-3 py-2 text-sm font-semibold text-white ${user ? "bg-red-700 hover:bg-red-800" : "bg-zinc-900 hover:bg-zinc-700"}`}
+        >
+          {user ? "Keluar" : "Login Admin"}
+        </button>
       </div>
     </div>
+  );
+
+  return (
+    <>
+      <header className="fixed inset-x-0 top-0 z-[1001] flex h-16 items-center justify-between border-b bg-white px-4 lg:hidden">
+        <div className="text-left">
+          <p className="font-bold">FFWS Welang</p>
+          <p className="text-xs text-zinc-500">Flood Warning System</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="rounded-lg border p-2 text-zinc-700"
+          aria-label="Buka menu navigasi"
+          aria-expanded={isOpen}
+        >
+          <AiOutlineMenu size={22} />
+        </button>
+      </header>
+
+      <aside className="sticky top-0 hidden h-screen w-[250px] flex-none border-r bg-white lg:block">
+        {navigation}
+      </aside>
+
+      {isOpen && (
+        <div className="fixed inset-0 z-[1100] lg:hidden">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setIsOpen(false)}
+            aria-label="Tutup menu navigasi"
+          />
+          <aside className="relative h-full w-[min(82vw,300px)] bg-white shadow-xl">
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="absolute right-3 top-3 z-10 rounded-lg p-2 hover:bg-zinc-100"
+              aria-label="Tutup menu navigasi"
+            >
+              <AiOutlineClose size={20} />
+            </button>
+            {navigation}
+          </aside>
+        </div>
+      )}
+    </>
   );
 };
 

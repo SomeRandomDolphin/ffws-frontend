@@ -1,5 +1,5 @@
 // useWeather.js
-// Fetches current weather & 3-day hourly forecast from Open-Meteo (free, no API key required).
+// Fetches current weather and a 2-day hourly forecast from Open-Meteo.
 // API Docs: https://open-meteo.com/en/docs
 // Usage: const { weather, isLoading, error } = useWeather(lat, lon);
 
@@ -62,17 +62,18 @@ export const useWeather = (lat, lon) => {
         const json = await res.json();
 
         const current = json.current;
-        // Build a 6-step hourly preview from the next few hours
+        // Build a 12-hour preview beginning at the current forecast hour.
         const nowIndex = json.hourly.time.findIndex(
-          (t) => t >= json.current.time.slice(0, 13)
+          (t) => t >= json.current.time.slice(0, 13),
         );
+        const forecastStart = nowIndex >= 0 ? nowIndex : 0;
         const forecast = json.hourly.time
-          .slice(nowIndex, nowIndex + 6)
+          .slice(forecastStart, forecastStart + 12)
           .map((time, i) => ({
             time,
-            temp: json.hourly.temperature_2m[nowIndex + i],
-            code: json.hourly.weathercode[nowIndex + i],
-            rain_prob: json.hourly.precipitation_probability[nowIndex + i],
+            temp: json.hourly.temperature_2m[forecastStart + i],
+            code: json.hourly.weathercode[forecastStart + i],
+            rain_prob: json.hourly.precipitation_probability[forecastStart + i],
           }));
 
         setWeather({

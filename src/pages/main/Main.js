@@ -1,394 +1,272 @@
+import { useEffect, useState } from "react";
+import { AiOutlineControl, AiOutlineLineChart } from "react-icons/ai";
+import { CiImageOn } from "react-icons/ci";
+import { FaTableCells } from "react-icons/fa6";
+import { IoStatsChart } from "react-icons/io5";
+import { useNavigate, useParams } from "react-router-dom";
+import StateMessage from "../../components/StateMessage";
+import { useGetData } from "../../hooks/useGetData";
+import CrossDesign from "./components/CrossDesign";
 import ElevasiMukaAir from "./components/ElevasiMukaAir";
+import Graph from "./components/Graph";
 import LevelMukaAir from "./components/LevelMukaAir";
 import Status from "./components/Status";
-import Graph from "./components/Graph";
-import CrossDesign from "./components/CrossDesign";
-import { AiOutlineLineChart } from "react-icons/ai";
-import { CiImageOn } from "react-icons/ci";
-import { AiOutlineControl } from "react-icons/ai";
-import { IoStatsChart } from "react-icons/io5";
-import { IoIosTimer } from "react-icons/io";
-import { FaHandsClapping, FaTableCells } from "react-icons/fa6";
-import { useEffect, useState } from "react";
-import { useAuthContext } from "../../hooks/useAuthContext";
-import { useGetDate } from "../../hooks/useGetDateTime";
-import { useNavigate, useParams } from "react-router-dom";
-import { useGetData } from "../../hooks/useGetData";
 import WeatherCard from "./components/WeatherCard";
 
-// Station coordinates (lat, lon) — must match Map.js stasiun definitions
 const STATION_COORDS = {
   Purwodadi: [-7.80483304165883, 112.74396200866504],
   Dhompo: [-7.657989032817421, 112.86132803433979],
 };
 
+const PanelTitle = ({ icon: Icon, title, description }) => (
+  <div className="text-left">
+    <div className="flex items-center gap-3">
+      <span className="rounded-full border p-2">
+        <Icon />
+      </span>
+      <h2 className="font-bold">{title}</h2>
+    </div>
+    {description && <p className="mt-2 text-xs text-zinc-500">{description}</p>}
+  </div>
+);
+
 const Main = () => {
-  const currentDate = new Date();
   const { stasiun } = useParams();
   const navigate = useNavigate();
-  const [isPeriod, setIsPeriod] = useState(false);
+  const { getStasiunLimitAir, getSensorHistory } = useGetData();
   const [period, setPeriod] = useState(1);
-  const [model, setModel] = useState("LSTM");
-  const [isModel, setIsModel] = useState(false);
-  const [limitAir, setLimitAir] = useState([-1, -1]);
+  const [limits, setLimits] = useState(null);
   const [showImage, setShowImage] = useState(false);
-
+  const [imageSrc, setImageSrc] = useState(null);
   const [aktualAir, setAktualAir] = useState(null);
   const [prediksiAir, setPrediksiAir] = useState(null);
   const [chartData, setChartData] = useState([]);
 
-  const { user } = useAuthContext();
-  const { getStasiunLimitAir, getSensorHistory, isLoading, error } =
-    useGetData();
-  const { getDayName, getTime } = useGetDate();
+  useEffect(() => {
+    if (!["Dhompo", "Purwodadi"].includes(stasiun)) {
+      navigate("/not-found");
+      return;
+    }
+    const load = async () => {
+      const [limitResponse, rainResponse] = await Promise.all([
+        getStasiunLimitAir("def", stasiun === "Dhompo" ? 1 : 2),
+        getSensorHistory("def", 0, 1, "Cendono"),
+      ]);
+      if (limitResponse?.data)
+        setLimits([
+          Number(limitResponse.data.batas_air_siaga),
+          Number(limitResponse.data.batas_air_awas),
+        ]);
+      const rain = Number(
+        rainResponse?.data?.history?.[0]?.curah_hujan_cendono,
+      );
+      let rounded = null;
+      if (Number.isFinite(rain) && rain >= 3)
+        rounded =
+          rain < 50 ? Math.ceil(rain / 5) * 5 : Math.ceil(rain / 10) * 10;
+      const file =
+        rounded >= 5 && rounded <= 100
+          ? `R${rounded}mm.jpg`
+          : "Gambar_sungai.jpeg";
+      setImageSrc(
+        `${process.env.PUBLIC_URL || ""}/${file}`.replace(/\/{2,}/g, "/"),
+      );
+    };
+    load();
+    // Existing data-hook functions are recreated on render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate, stasiun]);
 
   const getStatus = (value) => {
-    return value <= limitAir[0]
-      ? "Aman"
-      : value > limitAir[0] && value < limitAir[1]
-        ? "Siaga"
-        : value >= limitAir[1]
-          ? "Bahaya"
-          : "Undefined";
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || !limits?.every(Number.isFinite))
+      return "Tidak tersedia";
+    if (numeric <= limits[0]) return "Aman";
+    if (numeric < limits[1]) return "Siaga";
+    return "Bahaya";
   };
 
-  const stateHandler = (val) => {
-    setPeriod(val);
-    setIsPeriod(false);
-  };
-
-  const modelHandler = (val) => {
-    setModel(val);
-    setIsModel(false);
-  };
-
-  const [imageSrc, setImageSrc] = useState(null);
-
-  useEffect(() => {
-    if (stasiun !== "Dhompo" && stasiun !== "Purwodadi") {
-      navigate("/not-found");
-    }
-    const id = stasiun === "Dhompo" ? 1 : 2;
-    getStasiunLimitAir("rand", id)
-      .then((res) => {
-        const { batas_air_siaga, batas_air_awas } = res?.data || {
-          batas_air_siaga: -1,
-          batas_air_awas: -1,
-        };
-        setLimitAir([batas_air_siaga, batas_air_awas]);
-      })
-      .catch();
-
-    const loadData = async () => {
-      let stasiunName = "Cendono";
-      let res = await getSensorHistory("def", 0, 1, stasiunName);
-      let curah_hujan = 0;
-      if (res && res.data && Array.isArray(res.data.history) && res.data.history.length > 0) {
-        const historyItem = res.data.history[0];
-        curah_hujan =
-          stasiunName === "Cendono"
-            ? historyItem.curah_hujan_cendono
-            : historyItem.curah_hujan_lawang;
-      }
-
-      let roundedValue;
-
-      if (curah_hujan >= 3 && curah_hujan < 5) {
-        roundedValue = 5; // Special case: round 3 and 4 up to 5
-      } else if (curah_hujan >= 5 && curah_hujan < 10) {
-        roundedValue = Math.ceil(curah_hujan / 5) * 5; // Round up to nearest 5
-      } else if (curah_hujan >= 10 && curah_hujan < 20) {
-        roundedValue = Math.ceil(curah_hujan / 5) * 5; // Round up to nearest 5
-      } else if (curah_hujan >= 20 && curah_hujan < 30) {
-        roundedValue = Math.ceil(curah_hujan / 5) * 5; // Round up to nearest 5
-      } else if (curah_hujan >= 30 && curah_hujan < 40) {
-        roundedValue = Math.ceil(curah_hujan / 5) * 5; // Round up to nearest 5
-      } else if (curah_hujan >= 40 && curah_hujan < 50) {
-        roundedValue = Math.ceil(curah_hujan / 5) * 5; // Round up to nearest 5
-      } else if (curah_hujan >= 50 && curah_hujan < 60) {
-        roundedValue = Math.ceil(curah_hujan / 10) * 10; // Round up to nearest 10
-      } else if (curah_hujan >= 60 && curah_hujan < 70) {
-        roundedValue = Math.ceil(curah_hujan / 10) * 10; // Round up to nearest 10
-      } else if (curah_hujan >= 70 && curah_hujan < 80) {
-        roundedValue = Math.ceil(curah_hujan / 10) * 10; // Round up to nearest 10
-      } else if (curah_hujan >= 80 && curah_hujan < 90) {
-        roundedValue = Math.ceil(curah_hujan / 10) * 10; // Round up to nearest 10
-      } else if (curah_hujan >= 90 && curah_hujan <= 100) {
-        roundedValue = Math.ceil(curah_hujan / 10) * 10; // Round up to nearest 10
-      }
-
-      if (roundedValue >= 5 && roundedValue <= 100) {
-        setImageSrc(
-          `https://sih3.dpuair.jatimprov.go.id/ffwsview/R${roundedValue}mm.jpg`,
-        );
-      } else {
-        setImageSrc(
-          "https://sih3.dpuair.jatimprov.go.id/ffwsview/Gambar_sungai.jpeg",
-        ); // No image for other conditions
-      }
-    };
-    loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const periods = stasiun === "Dhompo" ? [1, 2, 3, 4, 5] : [1, 2, 3];
+  const hasActual = Number.isFinite(Number(aktualAir));
+  const hasPrediction = Number.isFinite(Number(prediksiAir));
 
   return (
-    <div className="overflow-auto text-black 2xl:px-[50px] h-full">
-      <div className="text-left flex items-center mb-5">
+    <div className="space-y-5 text-left">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="flex items-center">
-            <p className="font-bold text-xl mr-2">
-              Hi, {user && user.user.nama}
-            </p>
-            <FaHandsClapping />
-          </div>
-          <p className="text-zinc-500 text-sm">Selamat memonitor air sungai!</p>
-        </div>
-        <div className="rounded-md text-sm border shadow px-3 py-1 ml-7 min-w-[150px]">
-          <p className="text-zinc-500 text-xs">Tanggal</p>
-          <p className="font-medium">
-            {getDayName(currentDate) +
-              ", " +
-              currentDate.toISOString().slice(0, 10)}
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">
+            AWLR {stasiun}
+          </p>
+          <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
+            Dashboard Monitoring Sungai
+          </h1>
+          <p className="mt-2 text-sm text-zinc-500">
+            Kondisi aktual dan prediksi muka air pada stasiun {stasiun}.
           </p>
         </div>
-        <div className="rounded-md text-sm border shadow px-3 py-1 ml-7 min-w-[150px]">
-          <p className="text-zinc-500 text-xs">
-            Kirim Request untuk Notifikasi
-          </p>
-          <a
-            href="https://api.whatsapp.com/send?phone=34621371153&text=I%20allow%20callmebot%20to%20send%20me%20messages"
-            target="_blank"
-            rel="noreferrer"
-            style={{ color: "red" }}
-          >
-            KLIK DISINI
-          </a>
-        </div>
-      </div>
-      {/* Weather Card */}
-      <div className="mb-5">
-        <WeatherCard
-          lat={STATION_COORDS[stasiun]?.[0]}
-          lon={STATION_COORDS[stasiun]?.[1]}
-          stationName={stasiun}
-        />
-      </div>
-      <div className="grid grid-rows-12">
-        <div className="row-span-1 flex">
-          <div className="rounded-md border p-5 mr-3 bg-white w-fit 2xl:w-full shadow">
-            <div className="flex items-center">
-              <div className="rounded-full p-2 border border-neutral-900">
-                <IoStatsChart />
+        <a
+          href="https://api.whatsapp.com/send?phone=34621371153&text=I%20allow%20callmebot%20to%20send%20me%20messages"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+        >
+          Aktifkan notifikasi WhatsApp
+        </a>
+      </header>
+
+      <WeatherCard
+        lat={STATION_COORDS[stasiun]?.[0]}
+        lon={STATION_COORDS[stasiun]?.[1]}
+        stationName={stasiun}
+      />
+
+      <section className="grid gap-5 xl:grid-cols-2">
+        <article className="rounded-2xl border bg-white p-4 shadow-sm sm:p-5">
+          <PanelTitle
+            icon={IoStatsChart}
+            title={`Kondisi Aktual ${stasiun}`}
+            description="Informasi muka air terbaru yang diterima sistem."
+          />
+          {hasActual ? (
+            <>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <Status value={getStatus(aktualAir)} />
+                <ElevasiMukaAir />
+                <LevelMukaAir value={aktualAir} />
               </div>
-              <p className="font-semibold ml-3">
-                Perkembangan Air Sungai {stasiun} Aktual
-              </p>
-            </div>
-            <p className="font-light text-xs text-left mt-3">
-              Informasi kondisi sungai saat ini
-            </p>
-            <div className="flex mt-3 text-left ">
-              <div className="flex items-center">
-                <Status value={getStatus(aktualAir ? aktualAir : -1)} />
-                <div className="ml-3">
-                  <ElevasiMukaAir value={60} />
-                </div>
-                <div className="ml-3">
-                  <LevelMukaAir value={aktualAir} />
-                </div>
-              </div>
-            </div>
-            <div>
-              <CrossDesign levelAir={aktualAir} />
-            </div>
-          </div>
-          {!showImage ? (
-            <div className="rounded-md border p-5 shadow w-full relative">
-              <div className="absolute top-1 right-1 flex items-center">
-                <p className="text-xs italic">Klik icon untuk melihat gambar</p>
-                <div
-                  onClick={() => setShowImage(!showImage)}
-                  className="p-1 mx-1 cursor-pointer hover:bg-gray-200 rounded-full"
-                >
-                  <CiImageOn />
-                </div>
-              </div>
-              <div className="flex items-center">
-                <div className="rounded-full items-center p-2 border border-black">
-                  <AiOutlineControl />
-                </div>
-                <p className="font-bold text-left ml-3">Konfigurasi Prediksi</p>
-              </div>
-              <p className="font-light text-xs text-left mt-3">
-                Atur komponen prediksi dengan menekan tombol pada masing-masing
-                opsi konfigurasi.
-              </p>
-              <div className="flex flex-wrap mt-3">
-                {/* <div className="relative text-left w-[150px] rounded-lg px-3 py-2 bg-blue-100 ml-3">
-                                <div className="flex items-center">
-                                    <MdEngineering/>
-                                    <p className="text-sm font-semibold ml-1">Model</p>
-                                </div>
-                                <div onClick={() => setIsModel(!isModel)} 
-                                className="flex font-base items-center cursor-pointer my-1 bg-blue-200 hover:bg-blue-300 rounded-md px-2 py-1 text-sm">
-                                    {model}
-                                </div>
-                                {isModel && <ul className="z-10 text-left text-sm absolute overflow-hidden bg-white top-20 right-0 w-full rounded-lg shadow border">
-                                    <li onClick={() => modelHandler('GRU')} className="p-2 cursor-pointer hover:bg-zinc-500">GRU</li>
-                                    <li onClick={() => modelHandler('LSTM')} className="p-2 cursor-pointer hover:bg-zinc-500">LSTM</li>
-                                    <li onClick={() => modelHandler('TCN')} className="p-2 cursor-pointer hover:bg-zinc-500">TCN</li>
-                                </ul>}
-                            </div> */}
-                <div className="relative text-left w-[150px] rounded-lg px-3 py-2 bg-lime-100 ml-3">
-                  <div className="flex items-center">
-                    <IoIosTimer />
-                    <p className="text-sm font-semibold ml-1">Periode</p>
-                  </div>
-                  <div
-                    onClick={() => setIsPeriod(!isPeriod)}
-                    className="flex font-base items-center cursor-pointer my-1 bg-lime-200 hover:bg-lime-300 rounded-md px-2 py-1 text-sm"
-                  >
-                    {period} Jam
-                  </div>
-                  {isPeriod && (
-                    <ul className="z-10 text-left text-sm absolute overflow-hidden bg-white top-20 right-0 w-full rounded-lg shadow border">
-                      <li
-                        onClick={() => stateHandler(1)}
-                        className="p-2 cursor-pointer hover:bg-zinc-500"
-                      >
-                        1 Jam
-                      </li>
-                      <li
-                        onClick={() => stateHandler(2)}
-                        className="p-2 cursor-pointer hover:bg-zinc-500"
-                      >
-                        2 Jam
-                      </li>
-                      <li
-                        onClick={() => stateHandler(3)}
-                        className="p-2 cursor-pointer hover:bg-zinc-500"
-                      >
-                        3 Jam
-                      </li>
-                      {stasiun === "Dhompo" && (
-                        <li
-                          onClick={() => stateHandler(4)}
-                          className="p-2 cursor-pointer hover:bg-zinc-500"
-                        >
-                          4 Jam
-                        </li>
-                      )}
-                      {stasiun === "Dhompo" && (
-                        <li
-                          onClick={() => stateHandler(5)}
-                          className="p-2 cursor-pointer hover:bg-zinc-500"
-                        >
-                          5 Jam
-                        </li>
-                      )}
-                    </ul>
-                  )}
-                </div>
-              </div>
-              <CrossDesign levelAir={prediksiAir} />
-            </div>
+              <CrossDesign levelAir={Number(aktualAir)} />
+            </>
           ) : (
-            <div className="rounded-md border p-5 shadow w-full relative">
-              <div className="absolute top-1 right-1 flex items-center">
-                <p className="text-xs italic">
-                  Klik icon untuk sembunyikan gambar
-                </p>
-                <div
-                  onClick={() => setShowImage(!showImage)}
-                  className="p-1 mx-1 cursor-pointer hover:bg-gray-200 rounded-full"
-                >
-                  <CiImageOn />
-                </div>
-              </div>
-              <p className="font-semibold text-sm text-left">
-                Gambar Sungai Stasiun {stasiun}
-              </p>
-              <div className="rounded-lg overflow-hidden m-3">
-                <img
-                  src={imageSrc}
-                  alt=""
-                  className="w-full h-full object-contain"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="flex">
-          <div className="row-span-2 my-3 border rounded-md p-5 shadow w-2/3">
-            <div className="">
-              <div className="flex items-center">
-                <div className="rounded-full border border-black p-2">
-                  <AiOutlineLineChart />
-                </div>
-                <p className="font-semibold ml-3">
-                  Prediksi Perkembangan Air Sungai {stasiun}
-                </p>
-              </div>
-              <p className="font-light text-xs text-left mt-3">
-                Informasi kondisi sungai yang akan datang berdasarkan
-                konfigurasi prediksi.
-              </p>
-              <div className="flex mt-3 text-left ">
-                <div className="flex items-center">
-                  <Status value={getStatus(prediksiAir ? prediksiAir : -1)} />
-                  <div className="ml-3">
-                    <ElevasiMukaAir value={12.5} />
-                  </div>
-                  <div className="ml-3">
-                    <LevelMukaAir value={prediksiAir} />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="">
-              <Graph
-                params={{ model, daerah: stasiun, periode: period }}
-                setters={{ setAktualAir, setPrediksiAir, setChartData }}
+            <div className="mt-4">
+              <StateMessage
+                title="Data aktual belum tersedia"
+                message="Grafik akan diperbarui setelah data telemetry berhasil diterima."
               />
             </div>
-          </div>
-          <div className="row-span-2 my-3 ml-3 border rounded-md p-5 shadow w-1/3">
-            <div className="flex items-center">
-              <div className="rounded-full border border-black p-2">
-                <FaTableCells />
-              </div>
-              <p className="font-semibold ml-3">
-                Tabel Prediksi Perkembangan Air Sungai {stasiun}
-              </p>
-            </div>
-            <div className="grid grid-cols-9 w-full border mt-5 rounded-lg max-h-[350px] text-sm shadow overflow-auto">
-              <div className="col-span-3 font-semibold py-2 border-b h-fit text-sm">
-                Jam
-              </div>
-              <div className="col-span-3 font-semibold py-2 border-b h-fit">
-                Aktual
-              </div>
-              <div className="col-span-3 font-semibold py-2 border-b h-fit">
-                Prediksi
-              </div>
+          )}
+        </article>
 
-              {chartData.map((item) => (
-                <div className="col-span-9 grid grid-cols-9" key={item.tanggal}>
-                  <div className="col-span-3 py-1 border-b text-sm">
-                    {getTime(item.tanggal)}
-                  </div>
-                  <div className="col-span-3 py-1 border-b text-sm">
-                    {item.aktual}
-                  </div>
-                  <div className="col-span-3 py-1 border-b text-sm">
-                    {item.prediksi}
-                  </div>
-                </div>
-              ))}
-            </div>
+        <article className="rounded-2xl border bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <PanelTitle
+              icon={AiOutlineControl}
+              title="Konfigurasi Prediksi"
+              description="Pilih horizon prediksi dan lihat visualisasi penampang atau gambar sungai."
+            />
+            <button
+              type="button"
+              onClick={() => setShowImage((value) => !value)}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-zinc-50"
+            >
+              <CiImageOn />
+              {showImage ? "Lihat penampang" : "Lihat gambar sungai"}
+            </button>
           </div>
-        </div>
-      </div>
+          <div className="mt-4">
+            <label
+              htmlFor="period"
+              className="mb-1 block text-xs font-semibold uppercase tracking-wide text-zinc-500"
+            >
+              Periode prediksi
+            </label>
+            <select
+              id="period"
+              value={period}
+              onChange={(event) => setPeriod(Number(event.target.value))}
+              className="w-full rounded-lg border bg-white px-3 py-2 text-sm sm:w-48"
+            >
+              {periods.map((value) => (
+                <option key={value} value={value}>
+                  {value} jam
+                </option>
+              ))}
+            </select>
+          </div>
+          {showImage ? (
+            <div className="mt-4 overflow-hidden rounded-xl border bg-zinc-50">
+              {imageSrc ? (
+                <img
+                  src={imageSrc}
+                  alt={`Kondisi referensi sungai stasiun ${stasiun}`}
+                  className="h-[240px] w-full object-contain"
+                />
+              ) : (
+                <StateMessage title="Gambar tidak tersedia" />
+              )}
+            </div>
+          ) : hasPrediction ? (
+            <CrossDesign levelAir={Number(prediksiAir)} />
+          ) : (
+            <div className="mt-4">
+              <StateMessage
+                title="Prediksi belum tersedia"
+                message="Pilih periode lain atau coba kembali setelah data prediksi diperbarui."
+              />
+            </div>
+          )}
+        </article>
+      </section>
+
+      <section className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
+        <article className="min-w-0 rounded-2xl border bg-white p-4 shadow-sm sm:p-5">
+          <PanelTitle
+            icon={AiOutlineLineChart}
+            title={`Perkembangan Air Sungai ${stasiun}`}
+            description="Perbandingan muka air aktual dengan hasil prediksi."
+          />
+          <div className="mt-4">
+            <Graph
+              params={{
+                model: stasiun === "Dhompo" ? "LSTM" : "GRU",
+                daerah: stasiun,
+                periode: period,
+              }}
+              setters={{ setAktualAir, setPrediksiAir, setChartData }}
+            />
+          </div>
+        </article>
+        <article className="rounded-2xl border bg-white p-4 shadow-sm sm:p-5">
+          <PanelTitle
+            icon={FaTableCells}
+            title="Tabel Prediksi"
+            description="Nilai aktual dan prediksi per waktu."
+          />
+          {chartData.length ? (
+            <div className="mt-4 max-h-[360px] overflow-auto rounded-xl border">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-zinc-50">
+                  <tr>
+                    <th className="px-3 py-2 text-left">Waktu</th>
+                    <th className="px-3 py-2 text-left">Aktual</th>
+                    <th className="px-3 py-2 text-left">Prediksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {chartData.map((item, index) => (
+                    <tr key={`${item.tanggal}-${index}`} className="border-t">
+                      <td className="px-3 py-2">
+                        {new Date(item.tanggal).toLocaleTimeString("id-ID", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </td>
+                      <td className="px-3 py-2">{item.aktual ?? "-"}</td>
+                      <td className="px-3 py-2">{item.prediksi ?? "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="mt-4">
+              <StateMessage
+                title="Tabel belum memiliki data"
+                message="Data akan muncul bersama hasil grafik prediksi."
+              />
+            </div>
+          )}
+        </article>
+      </section>
     </div>
   );
 };

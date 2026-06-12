@@ -1,62 +1,58 @@
-import SensorTable from "./components/SensorTable";
-import PrediksiTable from "./components/PrediksiTable";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuthContext } from "../../hooks/useAuthContext";
-import { useParams, useNavigate } from "react-router-dom";
+import PrediksiTable from "./components/PrediksiTable";
+import SensorTable from "./components/SensorTable";
+
 const History = () => {
-  const [isSensor, setIsSensor] = useState(true);
-  const [isClicking, setIsClicking] = useState(false);
+  const [view, setView] = useState("sensor");
   const { stasiun } = useParams();
   const navigate = useNavigate();
-  const handleClick = (cb) => {
-    cb();
-    setIsClicking(false);
-  };
-
   const { user } = useAuthContext();
 
   useEffect(() => {
-    if (stasiun !== "Cendono" && stasiun !== "Lawang") {
-      navigate("/not-found");
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!["Cendono", "Lawang"].includes(stasiun)) navigate("/not-found");
+  }, [navigate, stasiun]);
 
   return (
-    <div className="p-10 bg-white rounded-md text-left">
-      <p className="text-3xl font-bold text-left">History Hasil</p>
-      <div className="flex items-center relative w-fit">
-        <p className="text-lg mr-[100px]">Pilih Jenis History</p>
-        <button
-          onClick={() => {
-            setIsClicking(!isClicking);
-          }}
-          className="px-5 py-1 rounded-lg hover:bg-zinc-400 bg-zinc-200 font-bold my-5"
+    <div className="space-y-5 text-left">
+      <header>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">
+          Stasiun ARR {stasiun}
+        </p>
+        <h1 className="mt-1 text-2xl font-bold sm:text-3xl">Riwayat Data</h1>
+        <p className="mt-2 text-sm text-zinc-500">
+          Tinjau data sensor hujan dan hasil prediksi yang tersimpan.
+        </p>
+      </header>
+      <section className="rounded-2xl border bg-white p-4 shadow-sm sm:p-6">
+        <div
+          className="inline-flex rounded-xl bg-zinc-100 p-1"
+          role="tablist"
+          aria-label="Jenis riwayat"
         >
-          {isSensor ? "Sensor" : "Prediksi"}
-        </button>
-        {isClicking && (
-          <div className="w-fit absolute rounded-lg overflow-hidden bg-white right-0 top-[60px] border">
-            <p
-              onClick={() => handleClick(() => setIsSensor(false))}
-              className="py-2 hover:bg-zinc-200 px-5 cursor-pointer"
+          {[
+            ["sensor", "Sensor"],
+            ["prediksi", "Prediksi"],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              aria-selected={view === value}
+              onClick={() => setView(value)}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold ${view === value ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-900"}`}
             >
-              Prediksi
-            </p>
-            <p
-              onClick={() => handleClick(() => setIsSensor(true))}
-              className="py-2 hover:bg-zinc-200 px-5 cursor-pointer"
-            >
-              Sensor
-            </p>
-          </div>
+              {label}
+            </button>
+          ))}
+        </div>
+        {view === "sensor" ? (
+          <SensorTable user={user} stasiun={stasiun} />
+        ) : (
+          <PrediksiTable user={user} />
         )}
-      </div>
-      {isSensor ? (
-        <SensorTable user={user} stasiun={stasiun} />
-      ) : (
-        <PrediksiTable user={user} />
-      )}
+      </section>
     </div>
   );
 };
