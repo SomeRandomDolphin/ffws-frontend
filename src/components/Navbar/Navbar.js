@@ -10,6 +10,7 @@ import { LuLayoutDashboard } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import { useLogout } from "../../hooks/useLogout";
+import { WATER_LEVEL_STATIONS } from "../../config/stations";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,6 +19,11 @@ const Navbar = () => {
   const { stasiun } = useParams();
   const { user } = useAuthContext();
   const { logout } = useLogout();
+  const historyStation = WATER_LEVEL_STATIONS.some(
+    ([, slug]) => slug === stasiun?.toLowerCase(),
+  )
+    ? stasiun.toLowerCase()
+    : "dhompo";
 
   const items = [
     {
@@ -28,13 +34,13 @@ const Navbar = () => {
     },
     {
       label: "Dashboard",
-      path: `/dashboard/${["Dhompo", "Purwodadi"].includes(stasiun) ? stasiun : "Dhompo"}`,
+      path: "/dashboard/Dhompo",
       icon: LuLayoutDashboard,
       active: location.pathname.startsWith("/dashboard"),
     },
     {
       label: "Riwayat",
-      path: `/history/${["Cendono", "Lawang"].includes(stasiun) ? stasiun : "Cendono"}`,
+      path: `/history/${historyStation}`,
       icon: AiOutlineHistory,
       active: location.pathname.startsWith("/history"),
     },

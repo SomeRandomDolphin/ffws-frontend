@@ -31,8 +31,23 @@ const Graph = ({ params, setters }) => {
 
   const { getChartData, isLoading, error } = useStatistic();
   const { getTime } = useGetDate();
-  const { model, daerah, periode } = params;
+  const { daerah } = params;
   const { user } = useAuthContext();
+
+  const transitionData = dates.map(() => null);
+  let lastActualIndex = -1;
+  aktualData.forEach((value, index) => {
+    if (value != null) lastActualIndex = index;
+  });
+  const firstFutureIndex = prediksiData.findIndex(
+    (value, index) =>
+      index > lastActualIndex && value != null && aktualData[index] == null,
+  );
+
+  if (lastActualIndex >= 0 && firstFutureIndex >= 0) {
+    transitionData[lastActualIndex] = aktualData[lastActualIndex];
+    transitionData[firstFutureIndex] = prediksiData[firstFutureIndex];
+  }
 
   const data = {
     labels: dates.map((date) => {
@@ -63,6 +78,30 @@ const Graph = ({ params, setters }) => {
           return gradientBg;
         },
         tension: 0.1,
+        fill: true,
+      },
+      {
+        label: "Transisi",
+        data: transitionData,
+        borderColor: "rgb(247,91,2)",
+        borderWidth: 3,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        tension: 0.1,
+        spanGaps: true,
+        backgroundColor: (context) => {
+          if (!context.chart.chartArea) return;
+          const {
+            ctx,
+            chartArea: { top, bottom },
+          } = context.chart;
+          const gradientBg = ctx.createLinearGradient(0, top, 0, bottom);
+          gradientBg.addColorStop(0, "rgba(247,91,2,1)");
+          gradientBg.addColorStop(0.3, "rgba(247,91,2,.5)");
+          gradientBg.addColorStop(1, "rgba(247,91,2,0)");
+          return gradientBg;
+        },
+        order: 2,
         fill: true,
       },
       {
@@ -104,18 +143,20 @@ const Graph = ({ params, setters }) => {
         labels: {
           boxHeight: 1,
           font: { family: "'Poppins', 'sans-serif'" },
+          filter: (item) => item.text !== "Transisi",
         },
         align: "end",
       },
-    },
-    tooltip: {
-      enabled: true,
-      callbacks: {
-        label: function (context) {
-          return "Amount: " + context.formattedValue;
+      tooltip: {
+        enabled: true,
+        filter: (context) => context.dataset.label !== "Transisi",
+        callbacks: {
+          label: function (context) {
+            return `${context.dataset.label}: ${context.formattedValue} m`;
+          },
         },
+        mode: "index",
       },
-      mode: "index",
     },
     scales: {
       y: {
@@ -155,22 +196,21 @@ const Graph = ({ params, setters }) => {
 
   useEffect(() => {
     const handleLoadChartData = async () => {
+      setDates([]);
+      setAktualData([]);
+      setPrediksiData([]);
+      setters.setAktualAir(null);
+      setters.setChartData([]);
+
       const token = user ? user.authorization.token : "def";
-      const res = await getChartData(
-        token,
-        daerah.toLowerCase() === "dhompo" ? "LSTM" : "GRU",
-        daerah,
-        periode,
-      );
+      const res = await getChartData(token, daerah, 5);
       let tempPred = [];
       let tempAct = [];
       let tempDate = [];
       let aktual = null;
-      let prediksi = null;
       if (Array.isArray(res?.data)) {
         res.data.forEach((item) => {
           if (item.aktual != null) aktual = item.aktual;
-          if (item.prediksi != null) prediksi = item.prediksi;
           tempAct.push(item.aktual);
           tempPred.push(item.prediksi);
           tempDate.push(item.tanggal);
@@ -180,13 +220,12 @@ const Graph = ({ params, setters }) => {
         setAktualData(tempAct);
         setPrediksiData(tempPred);
         setters.setAktualAir(aktual);
-        setters.setPrediksiAir(prediksi);
         setters.setChartData(res.data);
       }
     };
     handleLoadChartData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [model, daerah, periode]);
+  }, [daerah]);
 
   return (
     <div className="h-full">
@@ -197,7 +236,11 @@ const Graph = ({ params, setters }) => {
           <StateMessage
             tone="error"
             title="Grafik tidak dapat dimuat"
-            message={error.response?.data?.message || error.message}
+            message={
+              error.response?.status === 404
+                ? "Prediksi belum tersedia untuk stasiun ini."
+                : error.response?.data?.message || error.message
+            }
           />
         ) : dates.length === 0 ? (
           <StateMessage

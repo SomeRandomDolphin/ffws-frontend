@@ -6,16 +6,19 @@ import { useGetData } from "../../../hooks/useGetData";
 import { useGetDate } from "../../../hooks/useGetDateTime";
 
 const PAGE_SIZE = 10;
-const fields = [
-  ["Purwodadi LSTM", "prediksi_level_muka_air_purwodadi_lstm"],
-  ["Purwodadi GRU", "prediksi_level_muka_air_purwodadi_gru"],
-  ["Purwodadi TCN", "prediksi_level_muka_air_purwodadi_tcn"],
-  ["Dhompo LSTM", "prediksi_level_muka_air_dhompo_lstm"],
-  ["Dhompo GRU", "prediksi_level_muka_air_dhompo_gru"],
-  ["Dhompo TCN", "prediksi_level_muka_air_dhompo_tcn"],
-];
+const HORIZONS = ["h1", "h2", "h3", "h4", "h5"];
 
-const PrediksiTable = ({ user }) => {
+const predictionDetail = (item, horizon) => ({
+  value: item.predictions?.[horizon],
+  status: item.status?.[horizon],
+  model: item.models?.[horizon],
+  degraded: item.degradation?.[horizon],
+});
+
+const degradationText = (value) =>
+  typeof value === "string" ? value : value ? JSON.stringify(value) : "";
+
+const PrediksiTable = ({ user, stasiun }) => {
   const [rows, setRows] = useState(null);
   const [totalLength, setTotalLength] = useState(0);
   const [pageIndex, setPageIndex] = useState(0);
@@ -28,6 +31,7 @@ const PrediksiTable = ({ user }) => {
       token,
       pageIndex * PAGE_SIZE,
       PAGE_SIZE,
+      stasiun,
     );
     if (response?.data) {
       setRows(
@@ -36,7 +40,7 @@ const PrediksiTable = ({ user }) => {
       setTotalLength(Number(response.data.total_count) || 0);
     } else setRows(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageIndex, user]);
+  }, [pageIndex, stasiun, user]);
 
   useEffect(() => {
     load();
@@ -63,7 +67,7 @@ const PrediksiTable = ({ user }) => {
       <div className="mt-6">
         <StateMessage
           title="Belum ada data prediksi"
-          message="Hasil prediksi belum tersedia pada halaman ini."
+          message="Prediksi belum tersedia untuk stasiun ini. Saat ini model yang telah aktif hanya Dhompo."
         />
       </div>
     );
@@ -78,33 +82,50 @@ const PrediksiTable = ({ user }) => {
         {rows.map((item) => (
           <article key={item.id} className="rounded-xl border p-4">
             <div className="flex justify-between">
-              <p className="font-semibold">Prediksi #{item.id}</p>
+              <div>
+                <p className="font-semibold">Prediksi #{item.id}</p>
+                <p className="text-xs text-zinc-500">
+                  {item.daerah} · Tier {item.serving_tier || "-"}
+                </p>
+              </div>
               <p className="text-xs text-zinc-500">
-                {getDate(item.predicted_for_time)} ·{" "}
-                {getTime(item.predicted_for_time)}
+                {getDate(item.source_timestamp)} ·{" "}
+                {getTime(item.source_timestamp)}
               </p>
             </div>
-            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              {fields.map(([label, key]) => (
-                <div key={key}>
-                  <dt className="text-xs text-zinc-500">{label}</dt>
-                  <dd className="font-medium">{item[key] ?? "-"} m</dd>
-                </div>
-              ))}
+            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+              {HORIZONS.map((horizon, index) => {
+                const detail = predictionDetail(item, horizon);
+                return (
+                  <div key={horizon}>
+                    <dt className="text-xs text-zinc-500">+{index + 1} jam</dt>
+                    <dd className="font-medium">
+                      {detail.value ?? "-"} m · {detail.status || "-"}
+                    </dd>
+                    <dd className="text-xs text-zinc-500">
+                      {detail.model || "Model tidak tersedia"}
+                      {detail.degraded
+                        ? ` · Degradasi: ${degradationText(detail.degraded)}`
+                        : ""}
+                    </dd>
+                  </div>
+                );
+              })}
             </dl>
           </article>
         ))}
       </div>
       <div className="hidden overflow-x-auto rounded-xl border lg:block">
-        <table className="w-full min-w-[1100px] text-sm">
+        <table className="w-full min-w-[1050px] text-sm">
           <thead className="bg-blue-50">
             <tr>
               <th className="px-3 py-3 text-left">ID</th>
               <th className="px-3 py-3 text-left">Tanggal</th>
               <th className="px-3 py-3 text-left">Jam</th>
-              {fields.map(([label]) => (
-                <th key={label} className="px-3 py-3 text-left">
-                  {label} (m)
+              <th className="px-3 py-3 text-left">Stasiun / Tier</th>
+              {HORIZONS.map((horizon, index) => (
+                <th key={horizon} className="px-3 py-3 text-left">
+                  +{index + 1} jam
                 </th>
               ))}
             </tr>
@@ -113,17 +134,32 @@ const PrediksiTable = ({ user }) => {
             {rows.map((item) => (
               <tr key={item.id} className="border-t">
                 <td className="px-3 py-3">{item.id}</td>
+                <td className="px-3 py-3">{getDate(item.source_timestamp)}</td>
+                <td className="px-3 py-3">{getTime(item.source_timestamp)}</td>
                 <td className="px-3 py-3">
-                  {getDate(item.predicted_for_time)}
+                  <span className="block font-medium">{item.daerah}</span>
+                  <span className="text-xs text-zinc-500">
+                    Tier {item.serving_tier || "-"}
+                  </span>
                 </td>
-                <td className="px-3 py-3">
-                  {getTime(item.predicted_for_time)}
-                </td>
-                {fields.map(([, key]) => (
-                  <td key={key} className="px-3 py-3">
-                    {item[key] ?? "-"}
-                  </td>
-                ))}
+                {HORIZONS.map((horizon) => {
+                  const detail = predictionDetail(item, horizon);
+                  return (
+                    <td key={horizon} className="px-3 py-3 align-top">
+                      <span className="block font-medium">
+                        {detail.value ?? "-"} m
+                      </span>
+                      <span className="block text-xs text-zinc-500">
+                        {detail.status || "-"} · {detail.model || "-"}
+                      </span>
+                      {detail.degraded && (
+                        <span className="block text-xs text-amber-700">
+                          Degradasi: {degradationText(detail.degraded)}
+                        </span>
+                      )}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

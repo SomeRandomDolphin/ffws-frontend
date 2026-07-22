@@ -7,13 +7,6 @@ import { useGetDate } from "../../../hooks/useGetDateTime";
 
 const PAGE_SIZE = 10;
 
-const rainStatus = (value) => {
-  if (!Number.isFinite(Number(value))) return "Data tidak tersedia";
-  if (Number(value) < 0.6) return "Hujan ringan";
-  if (Number(value) < 2) return "Hujan sedang";
-  return "Hujan lebat";
-};
-
 const SensorTable = ({ user, stasiun }) => {
   const [sensorData, setSensorData] = useState(null);
   const [totalLength, setTotalLength] = useState(0);
@@ -67,7 +60,7 @@ const SensorTable = ({ user, stasiun }) => {
       <div className="mt-6">
         <StateMessage
           title="Belum ada data sensor"
-          message={`Tidak ada catatan curah hujan untuk ${stasiun} pada halaman ini.`}
+          message={`Tidak ada catatan muka air untuk stasiun ini pada halaman ini.`}
         />
       </div>
     );
@@ -76,8 +69,7 @@ const SensorTable = ({ user, stasiun }) => {
   const lastPage = Math.max(0, Math.ceil(totalLength / PAGE_SIZE) - 1);
   const start = pageIndex * PAGE_SIZE + 1;
   const end = Math.min(start + sensorData.length - 1, totalLength);
-  const valueFor = (item) =>
-    stasiun === "Cendono" ? item.curah_hujan_cendono : item.curah_hujan_lawang;
+  const valueFor = (item) => item[stasiun];
 
   return (
     <div className="mt-6">
@@ -86,12 +78,7 @@ const SensorTable = ({ user, stasiun }) => {
           const value = valueFor(item);
           return (
             <article key={item.id} className="rounded-xl border p-4">
-              <div className="flex items-start justify-between gap-3">
-                <p className="font-semibold">Catatan #{item.id}</p>
-                <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
-                  {rainStatus(value)}
-                </span>
-              </div>
+              <p className="font-semibold">Catatan #{item.id}</p>
               <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <dt className="text-zinc-500">Tanggal</dt>
@@ -102,8 +89,8 @@ const SensorTable = ({ user, stasiun }) => {
                   <dd className="font-medium">{getTime(item.tanggal)}</dd>
                 </div>
                 <div>
-                  <dt className="text-zinc-500">Curah hujan</dt>
-                  <dd className="font-medium">{value ?? "-"} mm</dd>
+                  <dt className="text-zinc-500">Tinggi muka air</dt>
+                  <dd className="font-medium">{value ?? "-"} m</dd>
                 </div>
               </dl>
             </article>
@@ -114,17 +101,16 @@ const SensorTable = ({ user, stasiun }) => {
         <table className="w-full min-w-[760px] text-sm">
           <thead className="bg-blue-50">
             <tr>
-              {[
-                "ID",
-                "Tanggal",
-                "Jam",
-                "Status curah hujan",
-                `CH ${stasiun} (mm)`,
-              ].map((heading) => (
-                <th key={heading} className="px-4 py-3 text-left font-semibold">
-                  {heading}
-                </th>
-              ))}
+              {["ID", "Tanggal", "Jam", "Tinggi muka air (m)"].map(
+                (heading) => (
+                  <th
+                    key={heading}
+                    className="px-4 py-3 text-left font-semibold"
+                  >
+                    {heading}
+                  </th>
+                ),
+              )}
             </tr>
           </thead>
           <tbody>
@@ -135,7 +121,6 @@ const SensorTable = ({ user, stasiun }) => {
                   <td className="px-4 py-3">{item.id}</td>
                   <td className="px-4 py-3">{getDate(item.tanggal)}</td>
                   <td className="px-4 py-3">{getTime(item.tanggal)}</td>
-                  <td className="px-4 py-3">{rainStatus(value)}</td>
                   <td className="px-4 py-3">{value ?? "-"}</td>
                 </tr>
               );

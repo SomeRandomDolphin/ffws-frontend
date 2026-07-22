@@ -8,12 +8,10 @@ export const useGetData = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.get(
-        `/getHistory?daerah=${daerah.toLowerCase()}&offset=${offset}&limit=${limit}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const res = await api.get(`/getHistory`, {
+        params: { daerah: daerah.toLowerCase(), offset, limit },
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setIsLoading(false);
       return res.data;
     } catch (error) {
@@ -24,16 +22,14 @@ export const useGetData = () => {
     }
   };
 
-  const getPredictionHistory = async (token = "def", offset, limit) => {
+  const getPredictionHistory = async (token = "def", offset, limit, daerah) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.get(
-        `/getHistoryPrediction?offset=${offset}&limit=${limit}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const res = await api.get(`/getHistoryPrediction`, {
+        params: { offset, limit, ...(daerah ? { daerah } : {}) },
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setIsLoading(false);
       return res.data;
     } catch (error) {

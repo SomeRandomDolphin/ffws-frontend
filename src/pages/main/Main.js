@@ -14,11 +14,10 @@ import Status from "./components/Status";
 import WeatherCard from "./components/WeatherCard";
 
 const STATION_COORDS = {
-  Purwodadi: [-7.80483304165883, 112.74396200866504],
   Dhompo: [-7.657989032817421, 112.86132803433979],
 };
 
-const DASHBOARD_STATIONS = ["Dhompo", "Purwodadi"];
+const DASHBOARD_STATIONS = ["Dhompo"];
 
 const PanelTitle = ({ icon: Icon, title, description }) => (
   <div className="text-left">
@@ -35,13 +34,12 @@ const PanelTitle = ({ icon: Icon, title, description }) => (
 const Main = () => {
   const { stasiun } = useParams();
   const navigate = useNavigate();
-  const { getStasiunLimitAir, getSensorHistory } = useGetData();
+  const { getStasiunLimitAir } = useGetData();
   const [period, setPeriod] = useState(1);
   const [limits, setLimits] = useState(null);
   const [showImage, setShowImage] = useState(false);
   const [imageSrc, setImageSrc] = useState(null);
   const [aktualAir, setAktualAir] = useState(null);
-  const [prediksiAir, setPrediksiAir] = useState(null);
   const [chartData, setChartData] = useState([]);
 
   useEffect(() => {
@@ -52,33 +50,21 @@ const Main = () => {
 
     setPeriod(1);
     setAktualAir(null);
-    setPrediksiAir(null);
     setChartData([]);
     setLimits(null);
 
     const load = async () => {
-      const [limitResponse, rainResponse] = await Promise.all([
-        getStasiunLimitAir("def", stasiun === "Dhompo" ? 1 : 2),
-        getSensorHistory("def", 0, 1, "Cendono"),
-      ]);
+      const limitResponse = await getStasiunLimitAir("def", 1);
       if (limitResponse?.data)
         setLimits([
           Number(limitResponse.data.batas_air_siaga),
           Number(limitResponse.data.batas_air_awas),
         ]);
-      const rain = Number(
-        rainResponse?.data?.history?.[0]?.curah_hujan_cendono,
-      );
-      let rounded = null;
-      if (Number.isFinite(rain) && rain >= 3)
-        rounded =
-          rain < 50 ? Math.ceil(rain / 5) * 5 : Math.ceil(rain / 10) * 10;
-      const file =
-        rounded >= 5 && rounded <= 100
-          ? `R${rounded}mm.jpg`
-          : "Gambar_sungai.jpeg";
       setImageSrc(
-        `${process.env.PUBLIC_URL || ""}/${file}`.replace(/\/{2,}/g, "/"),
+        `${process.env.PUBLIC_URL || ""}/Gambar_sungai.jpeg`.replace(
+          /\/{2,}/g,
+          "/",
+        ),
       );
     };
     load();
@@ -95,9 +81,17 @@ const Main = () => {
     return "Bahaya";
   };
 
-  const periods = stasiun === "Dhompo" ? [1, 2, 3, 4, 5] : [1, 2, 3];
-  const hasActual = Number.isFinite(Number(aktualAir));
-  const hasPrediction = Number.isFinite(Number(prediksiAir));
+  const periods = [1, 2, 3, 4, 5];
+  const forecastRows = chartData
+    .filter(
+      (item) => item.aktual == null && Number.isFinite(Number(item.prediksi)),
+    )
+    .slice(0, 5);
+  const selectedForecast = forecastRows[period - 1];
+  const prediksiAir = selectedForecast?.prediksi ?? null;
+  const hasActual = aktualAir != null && Number.isFinite(Number(aktualAir));
+  const hasPrediction =
+    prediksiAir != null && Number.isFinite(Number(prediksiAir));
 
   return (
     <div className="space-y-5 text-left">
@@ -139,14 +133,14 @@ const Main = () => {
               })}
             </div>
           </div>
-          <a
+          {/* <a
             href="https://api.whatsapp.com/send?phone=34621371153&text=I%20allow%20callmebot%20to%20send%20me%20messages"
             target="_blank"
             rel="noreferrer"
             className="inline-flex min-h-[42px] items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
           >
             Aktifkan notifikasi WhatsApp
-          </a>
+          </a> */}
         </div>
       </header>
 
@@ -199,24 +193,31 @@ const Main = () => {
             </button>
           </div>
           <div className="mt-4">
-            <label
-              htmlFor="period"
-              className="mb-1 block text-xs font-semibold uppercase tracking-wide text-zinc-500"
-            >
-              Periode prediksi
-            </label>
-            <select
-              id="period"
-              value={period}
-              onChange={(event) => setPeriod(Number(event.target.value))}
-              className="w-full rounded-lg border bg-white px-3 py-2 text-sm sm:w-48"
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Timestep prediksi
+            </p>
+            <div
+              className="grid grid-cols-2 gap-2 sm:grid-cols-5"
+              role="group"
+              aria-label="Pilih timestep prediksi"
             >
               {periods.map((value) => (
-                <option key={value} value={value}>
-                  {value} jam
-                </option>
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={period === value}
+                  onClick={() => setPeriod(value)}
+                  className={`rounded-lg border px-2 py-2 text-center text-sm transition-colors ${period === value ? "border-blue-700 bg-blue-700 text-white" : "bg-white text-zinc-700 hover:bg-zinc-50"}`}
+                >
+                  <span className="block font-semibold">+{value} jam</span>
+                  <span
+                    className={`block text-xs ${period === value ? "text-blue-100" : "text-zinc-500"}`}
+                  >
+                    {forecastRows[value - 1]?.prediksi ?? "-"} m
+                  </span>
+                </button>
               ))}
-            </select>
+            </div>
           </div>
           {showImage ? (
             <div className="mt-4 overflow-hidden rounded-xl border bg-zinc-50">
@@ -236,7 +237,7 @@ const Main = () => {
             <div className="mt-4">
               <StateMessage
                 title="Prediksi belum tersedia"
-                message="Pilih periode lain atau coba kembali setelah data prediksi diperbarui."
+                message={`Prediksi timestep +${period} jam belum tersedia.`}
               />
             </div>
           )}
@@ -252,12 +253,8 @@ const Main = () => {
           />
           <div className="mt-4">
             <Graph
-              params={{
-                model: stasiun === "Dhompo" ? "LSTM" : "GRU",
-                daerah: stasiun,
-                periode: period,
-              }}
-              setters={{ setAktualAir, setPrediksiAir, setChartData }}
+              params={{ daerah: stasiun }}
+              setters={{ setAktualAir, setChartData }}
             />
           </div>
         </article>
@@ -272,24 +269,37 @@ const Main = () => {
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-zinc-50">
                   <tr>
+                    <th className="px-3 py-2 text-left">Timestep</th>
                     <th className="px-3 py-2 text-left">Waktu</th>
                     <th className="px-3 py-2 text-left">Aktual</th>
                     <th className="px-3 py-2 text-left">Prediksi</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {chartData.map((item, index) => (
-                    <tr key={`${item.tanggal}-${index}`} className="border-t">
-                      <td className="px-3 py-2">
-                        {new Date(item.tanggal).toLocaleTimeString("id-ID", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </td>
-                      <td className="px-3 py-2">{item.aktual ?? "-"}</td>
-                      <td className="px-3 py-2">{item.prediksi ?? "-"}</td>
-                    </tr>
-                  ))}
+                  {chartData.map((item, index) => {
+                    const forecastIndex = forecastRows.indexOf(item);
+                    const isSelected = forecastIndex === period - 1;
+                    return (
+                      <tr
+                        key={`${item.tanggal}-${index}`}
+                        className={`border-t ${isSelected ? "bg-blue-50" : ""}`}
+                      >
+                        <td className="px-3 py-2 font-medium">
+                          {forecastIndex >= 0
+                            ? `+${forecastIndex + 1} jam`
+                            : "Aktual"}
+                        </td>
+                        <td className="px-3 py-2">
+                          {new Date(item.tanggal).toLocaleTimeString("id-ID", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </td>
+                        <td className="px-3 py-2">{item.aktual ?? "-"}</td>
+                        <td className="px-3 py-2">{item.prediksi ?? "-"}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

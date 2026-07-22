@@ -5,37 +5,23 @@ import { useNavigate } from "react-router-dom";
 import { useGetData } from "../../hooks/useGetData";
 import { useInundation } from "../../hooks/useInundation";
 import { useRainViewer } from "../../hooks/useRainViewer";
-import { useStatistic } from "../../hooks/useStatistic";
 import Loading from "../../components/Loading";
 import StateMessage from "../../components/StateMessage";
 
 const STATIONS = {
   "AWLR Purwodadi": [-7.80483304165883, 112.74396200866504],
   "AWLR Dhompo": [-7.657989032817421, 112.86132803433979],
-  "ARR Cendono": [-7.75797992, 112.69253151],
-  "ARR Lawang": [-7.832884, 112.697698],
 };
 
 const STATION_LABELS = {
   "AWLR Purwodadi": "right",
   "AWLR Dhompo": "left",
-  "ARR Cendono": "left",
-  "ARR Lawang": "right",
 };
 
 const WATER_COLORS = {
   Aman: "#22c55e",
   Siaga: "#eab308",
   Bahaya: "#dc2626",
-  unavailable: "#71717a",
-};
-const RAIN_COLORS = {
-  "Tidak Hujan": "#86efac",
-  "Sangat Ringan": "#67e8f9",
-  Ringan: "#60a5fa",
-  Sedang: "#facc15",
-  Lebat: "#fb923c",
-  "Sangat Lebat": "#ef4444",
   unavailable: "#71717a",
 };
 
@@ -47,16 +33,6 @@ const getWaterStatus = (value, limits) => {
   return "Bahaya";
 };
 
-const getRainStatus = (value) => {
-  if (!Number.isFinite(value)) return "unavailable";
-  if (value >= 20) return "Sangat Lebat";
-  if (value >= 10) return "Lebat";
-  if (value >= 5) return "Sedang";
-  if (value >= 1) return "Ringan";
-  if (value >= 0.1) return "Sangat Ringan";
-  return "Tidak Hujan";
-};
-
 const escapeHtml = (value) =>
   String(value)
     .replaceAll("&", "&amp;")
@@ -66,11 +42,10 @@ const escapeHtml = (value) =>
     .replaceAll("'", "&#039;");
 
 const makeMarkerIcon = ({ name, data, color, imageUrl }) => {
-  const isWaterStation = name.startsWith("AWLR");
   const detail =
     data.status === "unavailable"
       ? "Data tidak tersedia"
-      : `${data.status} · ${data.value} ${isWaterStation ? "m" : "mm"}`;
+      : `${data.status} · ${data.value} m`;
   const labelSide = STATION_LABELS[name];
 
   return L.divIcon({
@@ -129,7 +104,6 @@ const MapPage = () => {
   const [showInundation, setShowInundation] = useState(false);
   const [baseLayer, setBaseLayer] = useState("street");
   const [mapInstance, setMapInstance] = useState(null);
-  const { getChartData } = useStatistic();
   const { getStasiunLimitAir, getSensorHistory } = useGetData();
   const {
     tileUrl: radarTileUrl,
@@ -144,37 +118,21 @@ const MapPage = () => {
     setLoading(true);
     const results = await Promise.all(
       Object.keys(STATIONS).map(async (name) => {
-        const [type, station] = name.split(" ");
-        if (type === "AWLR") {
-          const [chart, limit] = await Promise.all([
-            getChartData(
-              "def",
-              station === "Dhompo" ? "lstm" : "gru",
-              station,
-              5,
-            ),
-            getStasiunLimitAir("def", station === "Dhompo" ? 1 : 2),
-          ]);
-          const actual = chart?.data
-            ?.filter((row) => Number.isFinite(Number(row.aktual)))
-            .at(-1)?.aktual;
-          const limits = limit?.data
-            ? [
-                Number(limit.data.batas_air_siaga),
-                Number(limit.data.batas_air_awas),
-              ]
-            : null;
-          const value = actual == null ? null : Number(actual);
-          return [name, { value, status: getWaterStatus(value, limits) }];
-        }
-        const response = await getSensorHistory("def", 0, 1, station);
+        const station = name.split(" ")[1];
+        const [response, limit] = await Promise.all([
+          getSensorHistory("def", 0, 1, station),
+          getStasiunLimitAir("def", station === "Dhompo" ? 1 : 2),
+        ]);
         const row = response?.data?.history?.[0];
-        const raw =
-          station === "Cendono"
-            ? row?.curah_hujan_cendono
-            : row?.curah_hujan_lawang;
+        const raw = row?.[station.toLowerCase()];
         const value = raw == null ? null : Number(raw);
-        return [name, { value, status: getRainStatus(value) }];
+        const limits = limit?.data
+          ? [
+              Number(limit.data.batas_air_siaga),
+              Number(limit.data.batas_air_awas),
+            ]
+          : null;
+        return [name, { value, status: getWaterStatus(value, limits) }];
       }),
     );
     setStationData(Object.fromEntries(results));
@@ -197,9 +155,7 @@ const MapPage = () => {
       Object.fromEntries(
         Object.keys(STATIONS).map((name) => {
           const status = stationData[name]?.status || "unavailable";
-          const color = name.startsWith("AWLR")
-            ? WATER_COLORS[status]
-            : RAIN_COLORS[status];
+          const color = WATER_COLORS[status];
           return [
             name,
             makeMarkerIcon({
@@ -254,8 +210,8 @@ const MapPage = () => {
           Flood Forecasting and Warning System
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-zinc-600">
-          Klik titik stasiun untuk membuka data monitoring, riwayat hujan, dan
-          hasil prediksi.
+          Klik titik stasiun untuk membuka data muka air dan hasil prediksi yang
+          tersedia.
         </p>
       </header>
 
@@ -400,9 +356,11 @@ const MapPage = () => {
             )}
             {!loading &&
               Object.entries(STATIONS).map(([name, position]) => {
-                const destination = name.startsWith("AWLR")
-                  ? `/dashboard/${name.split(" ")[1]}`
-                  : `/history/${name.split(" ")[1]}`;
+                const station = name.split(" ")[1];
+                const destination =
+                  station === "Dhompo"
+                    ? "/dashboard/Dhompo"
+                    : `/history/${station.toLowerCase()}`;
                 return (
                   <Marker
                     key={name}
@@ -465,23 +423,8 @@ const MapPage = () => {
                 </div>
               ))}
             </div>
-            <div>
-              <p className="mb-2 font-semibold">Intensitas hujan</p>
-              {Object.entries(RAIN_COLORS).map(([label, color]) => (
-                <div key={label} className="mb-1 flex items-center gap-2">
-                  <span
-                    className="h-3 w-3 rounded-sm"
-                    style={{ background: color }}
-                  />
-                  <span>
-                    {label === "unavailable" ? "Data tidak tersedia" : label}
-                  </span>
-                </div>
-              ))}
-            </div>
             <div className="border-t pt-3 text-xs text-zinc-500">
               <p>AWLR: muka air sungai</p>
-              <p>ARR: curah hujan</p>
               <p>Hulu: Purwodadi · Hilir: Dhompo</p>
             </div>
           </div>
