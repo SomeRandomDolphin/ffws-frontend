@@ -13,6 +13,7 @@ import { useStatistic } from "../../../hooks/useStatistic";
 import { useAuthContext } from "../../../hooks/useAuthContext";
 import { useEffect, useState } from "react";
 import { useGetDate } from "../../../hooks/useGetDateTime";
+import { centimetersToMeters } from "../../../utils/waterLevel";
 import Loading from "../../../components/Loading";
 import StateMessage from "../../../components/StateMessage";
 ChartJs.register(
@@ -209,7 +210,13 @@ const Graph = ({ params, setters }) => {
       let tempDate = [];
       let aktual = null;
       if (Array.isArray(res?.data)) {
-        res.data.forEach((item) => {
+        const normalizedData = res.data.map((item) => ({
+          ...item,
+          aktual: centimetersToMeters(item.aktual),
+          prediksi: centimetersToMeters(item.prediksi),
+        }));
+
+        normalizedData.forEach((item) => {
           if (item.aktual != null) aktual = item.aktual;
           tempAct.push(item.aktual);
           tempPred.push(item.prediksi);
@@ -220,7 +227,7 @@ const Graph = ({ params, setters }) => {
         setAktualData(tempAct);
         setPrediksiData(tempPred);
         setters.setAktualAir(aktual);
-        setters.setChartData(res.data);
+        setters.setChartData(normalizedData);
       }
     };
     handleLoadChartData();

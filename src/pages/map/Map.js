@@ -7,6 +7,7 @@ import { useInundation } from "../../hooks/useInundation";
 import { useRainViewer } from "../../hooks/useRainViewer";
 import Loading from "../../components/Loading";
 import StateMessage from "../../components/StateMessage";
+import { centimetersToMeters } from "../../utils/waterLevel";
 
 const STATIONS = {
   "AWLR Purwodadi": [-7.80483304165883, 112.74396200866504],
@@ -125,7 +126,7 @@ const MapPage = () => {
         ]);
         const row = response?.data?.history?.[0];
         const raw = row?.[station.toLowerCase()];
-        const value = raw == null ? null : Number(raw);
+        const value = centimetersToMeters(raw);
         const limits = limit?.data
           ? [
               Number(limit.data.batas_air_siaga),

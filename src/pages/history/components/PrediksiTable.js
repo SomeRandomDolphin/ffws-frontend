@@ -4,12 +4,13 @@ import Loading from "../../../components/Loading";
 import StateMessage from "../../../components/StateMessage";
 import { useGetData } from "../../../hooks/useGetData";
 import { useGetDate } from "../../../hooks/useGetDateTime";
+import { centimetersToMeters } from "../../../utils/waterLevel";
 
 const PAGE_SIZE = 10;
 const HORIZONS = ["h1", "h2", "h3", "h4", "h5"];
 
 const predictionDetail = (item, horizon) => ({
-  value: item.predictions?.[horizon],
+  value: centimetersToMeters(item.predictions?.[horizon]),
   status: item.status?.[horizon],
   model: item.models?.[horizon],
   degraded: item.degradation?.[horizon],

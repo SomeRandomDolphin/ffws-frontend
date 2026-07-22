@@ -4,6 +4,7 @@ import Loading from "../../../components/Loading";
 import StateMessage from "../../../components/StateMessage";
 import { useGetData } from "../../../hooks/useGetData";
 import { useGetDate } from "../../../hooks/useGetDateTime";
+import { centimetersToMeters } from "../../../utils/waterLevel";
 
 const PAGE_SIZE = 10;
 
@@ -69,7 +70,7 @@ const SensorTable = ({ user, stasiun }) => {
   const lastPage = Math.max(0, Math.ceil(totalLength / PAGE_SIZE) - 1);
   const start = pageIndex * PAGE_SIZE + 1;
   const end = Math.min(start + sensorData.length - 1, totalLength);
-  const valueFor = (item) => item[stasiun];
+  const valueFor = (item) => centimetersToMeters(item[stasiun]);
 
   return (
     <div className="mt-6">
