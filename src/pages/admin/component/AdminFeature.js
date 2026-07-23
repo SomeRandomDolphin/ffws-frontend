@@ -6,6 +6,16 @@ import {
 import { MdErrorOutline } from "react-icons/md";
 import { useEffect, useState } from "react";
 import { useGetData } from "../../../hooks/useGetData";
+import {
+  centimetersToMeters,
+  metersToCentimeters,
+} from "../../../utils/waterLevel";
+
+const STATION_INFO_IDS = {
+  Dhompo: 15,
+  Purwodadi: 5,
+};
+
 const AdminFeature = ({ user }) => {
   const adminRole = Number(process.env.REACT_APP_ADMIN_ROLE);
   const [currentFeature, setCurrentFeature] = useState(null);
@@ -25,14 +35,14 @@ const AdminFeature = ({ user }) => {
   const handleApply = async () => {
     const res = await updateLimitAir(user.authorization.token, {
       id: stationInformation.id,
-      new_batas_air_siaga: limitSiaga,
-      new_batas_air_awas: limitAwas,
+      new_batas_air_siaga: metersToCentimeters(limitSiaga),
+      new_batas_air_awas: metersToCentimeters(limitAwas),
     });
     if (res) {
       console.log(res);
       setStationInformation(res.data);
-      setLimitAwas(res.data.batas_air_awas);
-      setLimitSiaga(res.data.batas_air_siaga);
+      setLimitAwas(centimetersToMeters(res.data.batas_air_awas));
+      setLimitSiaga(centimetersToMeters(res.data.batas_air_siaga));
     }
 
     setCurrentFeature(null);
@@ -48,17 +58,17 @@ const AdminFeature = ({ user }) => {
 
   useEffect(() => {
     const loadData = async () => {
-      const id = stasiun === "Dhompo" ? 1 : 2;
+      const id = STATION_INFO_IDS[stasiun];
       const res = await getStasiunLimitAir("rand", id);
       if (res) {
         const { batas_air_siaga, batas_air_awas } = res.data;
-        setLimitAwas(batas_air_awas);
-        setLimitSiaga(batas_air_siaga);
+        setLimitAwas(centimetersToMeters(batas_air_awas));
+        setLimitSiaga(centimetersToMeters(batas_air_siaga));
         setStationInformation(res.data);
       }
     };
     loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stasiun]);
 
   return (
@@ -154,7 +164,10 @@ const AdminFeature = ({ user }) => {
           )}
         </div>
         <p className="text-red-700 text-xs">
-          {error && (error.response?.data?.message || error.message || "Terjadi kesalahan.")}
+          {error &&
+            (error.response?.data?.message ||
+              error.message ||
+              "Terjadi kesalahan.")}
         </p>
       </div>
 

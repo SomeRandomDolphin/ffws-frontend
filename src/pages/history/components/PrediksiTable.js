@@ -4,36 +4,65 @@ import Loading from "../../../components/Loading";
 import StateMessage from "../../../components/StateMessage";
 import { useGetData } from "../../../hooks/useGetData";
 import { useGetDate } from "../../../hooks/useGetDateTime";
-import { centimetersToMeters } from "../../../utils/waterLevel";
+import {
+  centimetersToMeters,
+  getWaterLevelStatus,
+} from "../../../utils/waterLevel";
 
 const PAGE_SIZE = 10;
 const HORIZONS = ["h1", "h2", "h3", "h4", "h5"];
+const STATION_CONFIG = {
+  dhompo: { infoId: 15 },
+  purwodadi: { infoId: 5, dangerWhenBelow: true },
+  bd_suwoto: { infoId: 3 },
+  krajan_timur: { infoId: 4 },
+  bd_lecari: { infoId: 7 },
+  bd_bakalan: { infoId: 8 },
+  bd_baong: { infoId: 6 },
+  awlr_kademungan: { infoId: 9 },
+  bd_guyangan: { infoId: 11 },
+  sidogiri: { infoId: 13 },
+  bd_domas: { infoId: 10 },
+  klosod: { infoId: 14 },
+  bd_grinting: { infoId: 12 },
+};
 
-const predictionDetail = (item, horizon) => ({
-  value: centimetersToMeters(item.predictions?.[horizon]),
-  status: item.status?.[horizon],
-  model: item.models?.[horizon],
-  degraded: item.degradation?.[horizon],
-});
+const predictionDetail = (item, horizon, limits, dangerWhenBelow) => {
+  const value = centimetersToMeters(item.predictions?.[horizon]);
+  const status = getWaterLevelStatus(value, limits, { dangerWhenBelow });
+  return {
+    value,
+    status: status === "unavailable" ? null : status.toUpperCase(),
+    model: item.models?.[horizon],
+    degraded: item.degradation?.[horizon],
+  };
+};
 
 const degradationText = (value) =>
   typeof value === "string" ? value : value ? JSON.stringify(value) : "";
 
 const PrediksiTable = ({ user, stasiun }) => {
   const [rows, setRows] = useState(null);
+  const [limits, setLimits] = useState(null);
   const [totalLength, setTotalLength] = useState(0);
   const [pageIndex, setPageIndex] = useState(0);
   const { getDate, getTime } = useGetDate();
-  const { getPredictionHistory, isLoading, error } = useGetData();
+  const { getPredictionHistory, getStasiunLimitAir, isLoading, error } =
+    useGetData();
 
   const load = useCallback(async () => {
     const token = user ? user.authorization.token : "def";
-    const response = await getPredictionHistory(
-      token,
-      pageIndex * PAGE_SIZE,
-      PAGE_SIZE,
-      stasiun,
-    );
+    const { infoId } = STATION_CONFIG[stasiun] || {};
+    const [response, limitResponse] = await Promise.all([
+      getPredictionHistory(token, pageIndex * PAGE_SIZE, PAGE_SIZE, stasiun),
+      getStasiunLimitAir(token, infoId),
+    ]);
+    if (limitResponse?.data)
+      setLimits([
+        centimetersToMeters(limitResponse.data.batas_air_siaga),
+        centimetersToMeters(limitResponse.data.batas_air_awas),
+      ]);
+    else setLimits(null);
     if (response?.data) {
       setRows(
         Array.isArray(response.data.history) ? response.data.history : [],
@@ -76,6 +105,7 @@ const PrediksiTable = ({ user, stasiun }) => {
   const lastPage = Math.max(0, Math.ceil(totalLength / PAGE_SIZE) - 1);
   const start = pageIndex * PAGE_SIZE + 1;
   const end = Math.min(start + rows.length - 1, totalLength);
+  const dangerWhenBelow = Boolean(STATION_CONFIG[stasiun]?.dangerWhenBelow);
 
   return (
     <div className="mt-6">
@@ -96,7 +126,12 @@ const PrediksiTable = ({ user, stasiun }) => {
             </div>
             <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
               {HORIZONS.map((horizon, index) => {
-                const detail = predictionDetail(item, horizon);
+                const detail = predictionDetail(
+                  item,
+                  horizon,
+                  limits,
+                  dangerWhenBelow,
+                );
                 return (
                   <div key={horizon}>
                     <dt className="text-xs text-zinc-500">+{index + 1} jam</dt>
@@ -144,7 +179,12 @@ const PrediksiTable = ({ user, stasiun }) => {
                   </span>
                 </td>
                 {HORIZONS.map((horizon) => {
-                  const detail = predictionDetail(item, horizon);
+                  const detail = predictionDetail(
+                    item,
+                    horizon,
+                    limits,
+                    dangerWhenBelow,
+                  );
                   return (
                     <td key={horizon} className="px-3 py-3 align-top">
                       <span className="block font-medium">

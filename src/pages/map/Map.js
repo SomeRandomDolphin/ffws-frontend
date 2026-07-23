@@ -7,16 +7,61 @@ import { useInundation } from "../../hooks/useInundation";
 import { useRainViewer } from "../../hooks/useRainViewer";
 import Loading from "../../components/Loading";
 import StateMessage from "../../components/StateMessage";
-import { centimetersToMeters } from "../../utils/waterLevel";
+import {
+  centimetersToMeters,
+  getWaterLevelStatus,
+} from "../../utils/waterLevel";
 
 const STATIONS = {
   "AWLR Purwodadi": [-7.80483304165883, 112.74396200866504],
   "AWLR Dhompo": [-7.657989032817421, 112.86132803433979],
+  "Bd. Suwoto": [-7.8667, 112.7835],
+  "Krajan Timur": [-7.8023639, 112.7368135],
+  "Bd. Lecari": [-7.7166661, 112.7309078],
+  "Bd. Bakalan": [-7.7513841, 112.7536749],
+  "Bd. Baong": [-7.7863028, 112.7620528],
+  "AWLR Kademungan": [-7.77331, 112.78173],
+  "Bd. Guyangan": [-7.6558, 112.8225],
+  Sidogiri: [-7.6704356, 112.8379127],
+  "Bd. Domas": [-7.7215222, 112.8121667],
+  Klosod: [-7.666, 112.84195],
+  "Bd. Grinting": [-7.6890694, 112.8459278],
+};
+
+const STATION_API = {
+  "AWLR Purwodadi": {
+    slug: "purwodadi",
+    infoId: 5,
+    dangerWhenBelow: true,
+  },
+  "AWLR Dhompo": { slug: "dhompo", infoId: 15 },
+  "Bd. Suwoto": { slug: "bd_suwoto", infoId: 3 },
+  "Krajan Timur": { slug: "krajan_timur", infoId: 4 },
+  "Bd. Lecari": { slug: "bd_lecari", infoId: 7 },
+  "Bd. Bakalan": { slug: "bd_bakalan", infoId: 8 },
+  "Bd. Baong": { slug: "bd_baong", infoId: 6 },
+  "AWLR Kademungan": { slug: "awlr_kademungan", infoId: 9 },
+  "Bd. Guyangan": { slug: "bd_guyangan", infoId: 11 },
+  Sidogiri: { slug: "sidogiri", infoId: 13 },
+  "Bd. Domas": { slug: "bd_domas", infoId: 10 },
+  Klosod: { slug: "klosod", infoId: 14 },
+  "Bd. Grinting": { slug: "bd_grinting", infoId: 12 },
 };
 
 const STATION_LABELS = {
   "AWLR Purwodadi": "right",
   "AWLR Dhompo": "left",
+  "Bd. Suwoto": "left",
+  "Krajan Timur": "left",
+  "Bd. Lecari": "right",
+  "Bd. Bakalan": "left",
+  "Bd. Baong": "right",
+  "AWLR Kademungan": "left",
+  "Bd. Guyangan": "right",
+  Sidogiri: "left",
+  "Bd. Domas": "right",
+  Klosod: "right",
+  "Bd. Grinting": "right",
 };
 
 const WATER_COLORS = {
@@ -24,14 +69,6 @@ const WATER_COLORS = {
   Siaga: "#eab308",
   Bahaya: "#dc2626",
   unavailable: "#71717a",
-};
-
-const getWaterStatus = (value, limits) => {
-  if (!Number.isFinite(value) || !limits?.every(Number.isFinite))
-    return "unavailable";
-  if (value <= limits[0]) return "Aman";
-  if (value < limits[1]) return "Siaga";
-  return "Bahaya";
 };
 
 const escapeHtml = (value) =>
@@ -119,21 +156,26 @@ const MapPage = () => {
     setLoading(true);
     const results = await Promise.all(
       Object.keys(STATIONS).map(async (name) => {
-        const station = name.split(" ")[1];
+        const { slug, infoId, dangerWhenBelow = false } = STATION_API[name];
         const [response, limit] = await Promise.all([
-          getSensorHistory("def", 0, 1, station),
-          getStasiunLimitAir("def", station === "Dhompo" ? 1 : 2),
+          getSensorHistory("def", 0, 1, slug),
+          getStasiunLimitAir("def", infoId),
         ]);
         const row = response?.data?.history?.[0];
-        const raw = row?.[station.toLowerCase()];
-        const value = centimetersToMeters(raw);
+        const value = centimetersToMeters(row?.[slug]);
         const limits = limit?.data
           ? [
-              Number(limit.data.batas_air_siaga),
-              Number(limit.data.batas_air_awas),
+              centimetersToMeters(limit.data.batas_air_siaga),
+              centimetersToMeters(limit.data.batas_air_awas),
             ]
           : null;
-        return [name, { value, status: getWaterStatus(value, limits) }];
+        return [
+          name,
+          {
+            value,
+            status: getWaterLevelStatus(value, limits, { dangerWhenBelow }),
+          },
+        ];
       }),
     );
     setStationData(Object.fromEntries(results));
@@ -357,11 +399,9 @@ const MapPage = () => {
             )}
             {!loading &&
               Object.entries(STATIONS).map(([name, position]) => {
-                const station = name.split(" ")[1];
+                const { slug } = STATION_API[name];
                 const destination =
-                  station === "Dhompo"
-                    ? "/dashboard/Dhompo"
-                    : `/history/${station.toLowerCase()}`;
+                  slug === "dhompo" ? "/dashboard/Dhompo" : `/history/${slug}`;
                 return (
                   <Marker
                     key={name}

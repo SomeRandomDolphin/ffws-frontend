@@ -12,6 +12,10 @@ import Graph from "./components/Graph";
 import LevelMukaAir from "./components/LevelMukaAir";
 import Status from "./components/Status";
 import WeatherCard from "./components/WeatherCard";
+import {
+  centimetersToMeters,
+  getWaterLevelStatus,
+} from "../../utils/waterLevel";
 
 const STATION_COORDS = {
   Dhompo: [-7.657989032817421, 112.86132803433979],
@@ -54,11 +58,11 @@ const Main = () => {
     setLimits(null);
 
     const load = async () => {
-      const limitResponse = await getStasiunLimitAir("def", 1);
+      const limitResponse = await getStasiunLimitAir("def", 15);
       if (limitResponse?.data)
         setLimits([
-          Number(limitResponse.data.batas_air_siaga),
-          Number(limitResponse.data.batas_air_awas),
+          centimetersToMeters(limitResponse.data.batas_air_siaga),
+          centimetersToMeters(limitResponse.data.batas_air_awas),
         ]);
       setImageSrc(
         `${process.env.PUBLIC_URL || ""}/Gambar_sungai.jpeg`.replace(
@@ -73,12 +77,8 @@ const Main = () => {
   }, [navigate, stasiun]);
 
   const getStatus = (value) => {
-    const numeric = Number(value);
-    if (!Number.isFinite(numeric) || !limits?.every(Number.isFinite))
-      return "Tidak tersedia";
-    if (numeric <= limits[0]) return "Aman";
-    if (numeric < limits[1]) return "Siaga";
-    return "Bahaya";
+    const status = getWaterLevelStatus(value, limits);
+    return status === "unavailable" ? "Tidak tersedia" : status;
   };
 
   const periods = [1, 2, 3, 4, 5];

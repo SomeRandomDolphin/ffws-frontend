@@ -1,4 +1,9 @@
-import { centimetersToMeters, getWaterLevelScaleMax } from "./waterLevel";
+import {
+  centimetersToMeters,
+  getWaterLevelScaleMax,
+  getWaterLevelStatus,
+  metersToCentimeters,
+} from "./waterLevel";
 
 test("converts API water levels from centimeters to meters", () => {
   expect(centimetersToMeters(891.7)).toBeCloseTo(8.917);
@@ -16,6 +21,34 @@ test("keeps missing or invalid water levels unavailable", () => {
   expect(centimetersToMeters(null)).toBeNull();
   expect(centimetersToMeters("")).toBeNull();
   expect(centimetersToMeters("not-a-number")).toBeNull();
+});
+
+test("converts edited metre limits back to API centimetres", () => {
+  expect(metersToCentimeters(2.9603)).toBe(296.03);
+  expect(metersToCentimeters("2.9827")).toBe(298.27);
+  expect(metersToCentimeters(null)).toBeNull();
+});
+
+test("compares water levels and thresholds after both use metres", () => {
+  const limits = [centimetersToMeters(16.78), centimetersToMeters(19.2)];
+
+  expect(getWaterLevelStatus(centimetersToMeters(9.145), limits)).toBe("Aman");
+  expect(getWaterLevelStatus(centimetersToMeters(18), limits)).toBe("Siaga");
+  expect(getWaterLevelStatus(centimetersToMeters(20), limits)).toBe("Bahaya");
+});
+
+test("supports inverse thresholds for Purwodadi", () => {
+  const reading = centimetersToMeters(288.581);
+  const limits = [centimetersToMeters(296.03), centimetersToMeters(298.27)];
+
+  expect(getWaterLevelStatus(reading, limits, { dangerWhenBelow: true })).toBe(
+    "Bahaya",
+  );
+});
+
+test("keeps status unavailable when readings or thresholds are invalid", () => {
+  expect(getWaterLevelStatus(null, [0.1, 0.2])).toBe("unavailable");
+  expect(getWaterLevelStatus(0.1, null)).toBe("unavailable");
 });
 
 test("scales the chart to small water-level readings", () => {
