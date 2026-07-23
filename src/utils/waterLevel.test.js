@@ -1,4 +1,4 @@
-import { centimetersToMeters } from "./waterLevel";
+import { centimetersToMeters, getWaterLevelScaleMax } from "./waterLevel";
 
 test("converts API water levels from centimeters to meters", () => {
   expect(centimetersToMeters(891.7)).toBeCloseTo(8.917);
@@ -16,4 +16,16 @@ test("keeps missing or invalid water levels unavailable", () => {
   expect(centimetersToMeters(null)).toBeNull();
   expect(centimetersToMeters("")).toBeNull();
   expect(centimetersToMeters("not-a-number")).toBeNull();
+});
+
+test("scales the chart to small water-level readings", () => {
+  expect(getWaterLevelScaleMax([0.01, 0.02, null])).toBeCloseTo(0.022);
+});
+
+test("scales across actual and predicted readings", () => {
+  expect(getWaterLevelScaleMax([2.5, 3, 4.5])).toBeCloseTo(4.95);
+});
+
+test("uses a safe default when there are no positive readings", () => {
+  expect(getWaterLevelScaleMax([null, undefined, 0])).toBe(1);
 });

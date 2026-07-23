@@ -13,7 +13,10 @@ import { useStatistic } from "../../../hooks/useStatistic";
 import { useAuthContext } from "../../../hooks/useAuthContext";
 import { useEffect, useState } from "react";
 import { useGetDate } from "../../../hooks/useGetDateTime";
-import { centimetersToMeters } from "../../../utils/waterLevel";
+import {
+  centimetersToMeters,
+  getWaterLevelScaleMax,
+} from "../../../utils/waterLevel";
 import Loading from "../../../components/Loading";
 import StateMessage from "../../../components/StateMessage";
 ChartJs.register(
@@ -49,6 +52,8 @@ const Graph = ({ params, setters }) => {
     transitionData[lastActualIndex] = aktualData[lastActualIndex];
     transitionData[firstFutureIndex] = prediksiData[firstFutureIndex];
   }
+
+  const scaleMax = getWaterLevelScaleMax([...aktualData, ...prediksiData]);
 
   const data = {
     labels: dates.map((date) => {
@@ -166,7 +171,7 @@ const Graph = ({ params, setters }) => {
           text: "Tinggi Air (m)",
           color: "black",
         },
-        suggestedMax: 5,
+        suggestedMax: scaleMax,
         suggestedMin: 0,
         grid: {
           color: "rgba(0,0,0,.05)",
@@ -175,7 +180,7 @@ const Graph = ({ params, setters }) => {
           display: false,
         },
         ticks: {
-          stepSize: 0.5,
+          maxTicksLimit: 8,
           tickBorderDash: [8, 4],
         },
       },
