@@ -47,8 +47,6 @@ The map also includes Surabaya monitoring locations, the city river network, and
 | Elevation and station sub-watersheds | DEMNAS from BIG, processed with WhiteboxTools | Raster input and GeoJSON output | Local drainage delineation |
 | Welang water level, rainfall, and water quality | Private sensors | JSON | Monitoring and forecast inputs |
 
-Source notes and processing metadata are stored with the datasets in `public/geo`.
-
 ## System Architecture
 
 ```mermaid
@@ -87,7 +85,7 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-The pre-development script copies the required MapLibre worker files to `public/vendor`. This generated directory is excluded from version control.
+The pre-development script copies the required MapLibre worker files to `public/vendor`.
 
 ## Production Build
 
@@ -97,10 +95,6 @@ npm run build
 
 The `Dockerfile` builds the standalone Next.js output and runs `node server.js` on port 3000.
 
-## Verification
-
-After a production build, check the dashboard at widths of 375, 768, and 1440 pixels. Verify keyboard navigation, station search and selection, panel closing with Escape, layer controls, detail-page navigation, reduced motion, and browser console errors.
-
 ## Related Repositories
 
 - [FFWS Frontend](https://github.com/SomeRandomDolphin/ffws-frontend)
@@ -109,4 +103,4 @@ After a production build, check the dashboard at widths of 375, 768, and 1440 pi
 
 ## License
 
-This project is for government and research use under the Flood Forecasting Warning System initiative.
+This project is funded through a research program at Institut Teknologi Sepuluh Nopember (ITS) and developed by the Department of Civil Engineering. It is intended for government and research use under the Flood Forecasting Warning System initiative.
