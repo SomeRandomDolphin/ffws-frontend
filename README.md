@@ -14,16 +14,13 @@ Welang readings and forecasts currently use deterministic simulation data. Surab
 
 ## Key Features
 
-- Interactive map for East Java, the Welang River Basin, and Surabaya
-- Watershed, sub-watershed, administrative-boundary, and river-network layers
-- Water-level readings with status labels and update times
-- Five-hour water-level forecasts and historical charts
+- Interactive watershed and river-network map
+- Water-level monitoring with station status and history
+- Five-hour flood-level forecasts
 - Rainfall and water-quality visualization
-- Searchable monitoring stations and station-detail pages
-- OpenStreetMap, BIG Rupabumi Indonesia, and Esri satellite basemaps
-- Layer visibility and opacity controls
-- Keyboard-accessible panels with reduced-motion support
-- Loading, unavailable-source, and stale-data states for Surabaya readings
+- Searchable stations with detailed monitoring pages
+
+Additional monitoring and analysis features are under active development.
 
 ## Dashboard Preview
 
