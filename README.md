@@ -1,19 +1,19 @@
 # ITS Water Dashboard frontend
 
-Frontend Next.js untuk pemantauan sumber daya air DAS Welang dan Surabaya. Data stasiun Welang, riwayat, prakiraan, hujan, dan kualitas air saat ini bersifat simulasi deterministik. Endpoint `/api/surabaya` meneruskan pembacaan dari sumber yang dikonfigurasi aplikasi dan mempertahankan status sumber ketika data live tidak tersedia.
+This Next.js application monitors water resources in the Welang river basin and Surabaya. Welang station readings, history, forecasts, rainfall, and water quality currently use deterministic simulation data. The `/api/surabaya` endpoint forwards readings from the configured source and preserves its source status when live data is unavailable.
 
-## Menjalankan secara lokal
+## Run locally
 
 ```powershell
 npm ci
 npm run dev
 ```
 
-Buka `http://localhost:3000`. Peta dimulai dari cakupan Jawa Timur dan dapat difokuskan ke DAS Welang atau Surabaya. Pencarian memilih dan memusatkan stasiun; pemilihan marker membuka pembacaan, status, serta tautan detail.
+Open `http://localhost:3000`. The map starts with an East Java overview and can focus on the Welang river basin or Surabaya. Search selects and centers a station. Selecting a marker opens its reading, status, and detail link.
 
-Jika basemap utama gagal atau memerlukan lebih dari 10 detik untuk dimuat, peta beralih ke OpenTopoMap. Gunakan “Coba muat peta lagi” setelah koneksi pulih. Pemulihan basemap tidak mengatur ulang stasiun atau posisi kamera yang dipilih.
+If the primary basemap fails or takes more than 10 seconds to load, the map switches to OpenTopoMap. After the connection recovers, use "Coba muat peta lagi" to retry. Reloading the basemap does not reset the selected station or camera position.
 
-Warna status dan data deterministik Welang berasal dari `src/lib/demo-data.ts`. Data stasiun berada di `public/data`, sedangkan batas wilayah dan jaringan sungai berada di `public/geo`. Nilai sensor Welang tetap berupa simulasi dan tidak memerlukan backend.
+Welang status colors and deterministic values come from `src/lib/demo-data.ts`. Station data is stored in `public/data`, while administrative boundaries and river networks are stored in `public/geo`. Welang sensor readings remain simulated and do not require a backend service.
 
 ## Production build
 
@@ -21,14 +21,14 @@ Warna status dan data deterministik Welang berasal dari `src/lib/demo-data.ts`. 
 npm run build
 ```
 
-`Dockerfile` membangun output standalone Next.js dan menjalankannya dengan `node server.js` pada port 3000.
+The `Dockerfile` builds the standalone Next.js output and runs it with `node server.js` on port 3000.
 
-## Struktur presentasi
+## Presentation structure
 
-Token bersama, tipografi, kontrol, dan gaya detail stasiun berada di `src/app/globals.css`. Tata letak dashboard dan antarmuka peta berada di `src/app/map-dashboard.css`. Ikon menggunakan SVG lokal tanpa dependency ikon tambahan.
+Shared tokens, typography, controls, and station-detail styles are defined in `src/app/globals.css`. Dashboard layout and map interface styles are defined in `src/app/map-dashboard.css`. The application uses local SVG icons without an additional icon dependency.
 
-Label stasiun menggunakan deteksi benturan dan memprioritaskan stasiun terpilih. Marker tetap dapat difokuskan dengan keyboard dan dicari ketika label disembunyikan. Preferensi reduced motion menonaktifkan animasi yang tidak diperlukan.
+Station labels use collision detection and give priority to the selected station. Markers remain keyboard-focusable and searchable when labels are hidden. The application disables unnecessary animation when the user prefers reduced motion.
 
-## Verifikasi
+## Verification
 
-Jalankan `npm run build`, lalu periksa browser pada lebar 375, 768, dan 1440px. Periksa navigasi keyboard, pencarian dan pemilihan stasiun, penutupan panel dengan Escape, kontrol lapisan, navigasi halaman detail, reduced motion, serta error console.
+Run `npm run build`, then check the application at widths of 375, 768, and 1440 pixels. Verify keyboard navigation, station search and selection, closing panels with Escape, layer controls, detail-page navigation, reduced motion, and browser console errors.
