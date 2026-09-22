@@ -1,139 +1,32 @@
-## About Repository
+# Welang Water Monitor frontend
 
-Frontend web application for **Flood Forecasting Warning System – Dinas PU Sumber Daya Air Jawa Timur**. This repository contains the web monitoring dashboard used to visualize water level, rainfall, and forecasting results from the backend and machine learning services.
+Next.js migration of the active Dash monitor. The current version is intentionally demo-first: `src/lib/demo-data.ts` provides deterministic station, history, forecast, rainfall, and five-parameter water-quality data while the FastAPI service remains available separately on port 8000.
 
-## Tech Stack
+## Run locally
 
-### Frontend
-
-- **React 18** (Create React App)
-- **React Router** – routing
-- **Axios** – API communication
-- **Chart.js & react-chartjs-2** – data visualization
-- **Leaflet & react-leaflet** – interactive maps
-- **Tailwind CSS** – styling
-
-### Backend
-
-- **Laravel** (REST API)
-- **MySQL** – relational database
-- **Laravel Mix** – asset bundling
-- **Axios** – frontend-backend communication
-
-### Machine Learning
-
-- **Python 3**
-- **TensorFlow & Keras** – deep learning models (LSTM, GRU, TCN)
-- **Flask** – ML inference API
-- **NumPy & Pandas** – data processing
-- **Scikit-learn** – evaluation & preprocessing
-- **SQLAlchemy** – database ORM
-- **Gunicorn** – production WSGI server
-
-## Requirements
-
-- **Node.js** >= 16.x (recommended)
-- **npm** or **yarn**
-
-## Getting Started
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/SomeRandomDolphin/ffws-frontend
-```
-
-### 2. Install dependencies
-
-Using npm:
-
-```bash
+```powershell
 npm install
+npm run dev
 ```
 
-Or using yarn:
+Open `http://localhost:3000`. The map starts at the East Java overview and drills into the Welang basin. Bundled layers include BIG administrative/basin boundaries, OSM rivers, DEMNAS-derived station sub-basins, rainfall symbols, water-quality rings, and the 15 monitoring stations.
 
-```bash
-yarn install
+If the primary basemap fails or takes more than 10 seconds to load, the main map switches to OpenTopoMap automatically. If both providers fail, use “Coba muat peta lagi” after the connection recovers; this refreshes tile sources without resetting the station selection or camera. Basemap recovery is independent of station markers and illustrative river/basin layers.
+
+The 15 station markers and their HTML labels render independently of tile loading. Search selects and centers a station; clicking a marker opens its current simulated reading, detail link, and chart action. The legend starts open, while Overview and the history chart start closed. On mobile the side panel becomes a scrollable bottom panel. The timeline changes simulated readings without rebuilding the map or resetting its camera.
+
+Station status colors and deterministic rainfall/quality values come from `src/lib/demo-data.ts`. Basin and administrative boundaries come from BIG, rivers from OpenStreetMap, and sub-basins from a reproducible DEMNAS/WhiteboxTools pipeline in `scripts/build_geodata.py`. The local Surabaya river layer includes river, stream, and canal features clipped to the BIG city boundary. Sensor values remain simulation data; no backend connection is required.
+
+Validation: `npx tsc --noEmit --incremental false` and `npm run build`. Browser checks should cover all 15 markers on desktop/mobile, keyboard and search selection, chart controls, layer toggles, timeline updates, and failed tile requests.
+
+## Frontend presentation
+
+Shared palette, typography, controls, and station-detail styles live in `src/app/globals.css`; dashboard layout and map UI live in `src/app/map-dashboard.css`. Icons are local SVGs with no added package dependency. Closing panels remain mounted for their 220 ms transition; reduced-motion preferences disable animation. On mobile, opening the chart closes the information panel to preserve map space.
+
+Station labels are placed around markers with collision detection, prioritizing the selected station. Labels without enough room are hidden; their markers remain focusable and searchable. After a user pans, zooms, or searches, panel resizing preserves the camera. “Tampilkan semua stasiun” restores framing of all stations.
+
+The Dash fallback remains available with:
+
+```powershell
+python run_dashboard.py
 ```
-
-### 3. Configure environment (optional but recommended)
-
-Create a `.env` file in the root directory and set your backend API base URL:
-
-```env
-REACT_APP_API_BASE_URL=http://localhost:8000/api
-```
-
-> Adjust the URL based on your backend deployment.
-
-### 4. Run the development server
-
-```bash
-npm start
-```
-
-The app will be available at:
-
-```
-http://localhost:3000
-```
-
-## Available Scripts
-
-- **Start development server**
-
-```bash
-npm start
-```
-
-- **Build for production**
-
-```bash
-npm run build
-```
-
-Generates an optimized production build in the `build/` folder.
-
-- **Run tests**
-
-```bash
-npm test
-```
-
-- **Eject (advanced)**
-
-```bash
-npm run eject
-```
-
-> ⚠️ This is irreversible. Use only if you need full control over the configuration.
-
-## Project Features
-
-- Real-time and historical water level visualization
-- Rainfall and flood forecasting charts
-- Interactive river and monitoring station maps
-- Responsive dashboard UI
-
-## Build & Deployment Notes
-
-- The project uses **Create React App** with `homepage` set to `.` for relative paths.
-- After running `npm run build`, deploy the contents of the `build/` directory to your web server.
-
-## Related Repositories
-
-- **FFWS Frontend**
-  [https://github.com/SomeRandomDolphin/ffws-frontend](https://github.com/SomeRandomDolphin/ffws-frontend)
-
-- **FFWS Backend**
-  [https://github.com/SomeRandomDolphin/ffws-backend](https://github.com/SomeRandomDolphin/ffws-backend)
-
-- **FFWS Machine Learning**
-  [https://github.com/SomeRandomDolphin/ffws-ml](https://github.com/SomeRandomDolphin/ffws-ml)
-
-The frontend consumes REST APIs from the backend service, while the backend integrates with the ML service for flood level forecasting and analytics.
-
-## License
-
-This project is for government and research use under the Flood Forecasting Warning System initiative.
