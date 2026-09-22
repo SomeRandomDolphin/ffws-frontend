@@ -2,7 +2,7 @@
 
 A web-based dashboard for monitoring river conditions, water levels, rainfall, water quality, and flood risk in the Welang River Basin and Surabaya.
 
-> Dashboard screenshot or GIF has not been added yet.
+![Flood Forecasting Dashboard demonstration](docs/dashboard-preview.gif)
 
 ## Overview
 
@@ -21,16 +21,6 @@ Welang readings and forecasts currently use deterministic simulation data. Surab
 - Searchable stations with detailed monitoring pages
 
 Additional monitoring and analysis features are under active development.
-
-## Dashboard Preview
-
-Screenshot: not yet added.
-
-GIF: not yet added.
-
-Deployed URL: not yet published.
-
-To run the dashboard locally, follow the instructions in [Local Development](#local-development).
 
 ## Study Area
 
@@ -101,6 +91,8 @@ The `Dockerfile` builds the standalone Next.js output and runs `node server.js` 
 - [FFWS Backend](https://github.com/SomeRandomDolphin/ffws-backend)
 - [FFWS Machine Learning](https://github.com/SomeRandomDolphin/ffws-ml)
 
-## License
+## Funding and Affiliation
 
-This project is funded through a research program at Institut Teknologi Sepuluh Nopember (ITS) and developed by the Department of Civil Engineering. It is intended for government and research use under the Flood Forecasting Warning System initiative.
+This project is funded through a research program at Institut Teknologi Sepuluh Nopember (ITS) and developed by the Department of Civil Engineering.
+
+The project supports government and research activities under the Flood Forecasting Warning System initiative.
