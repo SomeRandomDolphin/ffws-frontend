@@ -1,139 +1,98 @@
-## About Repository
+# Flood Forecasting Dashboard
 
-Frontend web application for **Flood Forecasting Warning System – Dinas PU Sumber Daya Air Jawa Timur**. This repository contains the web monitoring dashboard used to visualize water level, rainfall, and forecasting results from the backend and machine learning services.
+A web-based dashboard for monitoring river conditions, water levels, rainfall, water quality, and flood risk in the Welang River Basin and Surabaya.
 
-## Tech Stack
+![Flood Forecasting Dashboard demonstration](docs/dashboard-preview.gif)
 
-### Frontend
+## Overview
 
-- **React 18** (Create React App)
-- **React Router** – routing
-- **Axios** – API communication
-- **Chart.js & react-chartjs-2** – data visualization
-- **Leaflet & react-leaflet** – interactive maps
-- **Tailwind CSS** – styling
+Flood monitoring requires hydrological readings, forecast results, and geographic context to be reviewed together. This dashboard combines those inputs in an interactive map and station-detail pages.
 
-### Backend
+The primary study area is the Welang River Basin in Pasuruan, East Java. The application also includes monitoring locations and river data for Surabaya. Users can inspect watershed boundaries, river networks, monitoring stations, simulated rainfall, water-level history, and short-term forecasts.
 
-- **Laravel** (REST API)
-- **MySQL** – relational database
-- **Laravel Mix** – asset bundling
-- **Axios** – frontend-backend communication
+Welang readings and forecasts currently use deterministic simulation data. Surabaya pages request data through the frontend API route and show source freshness or connection failures when live readings are unavailable. The dashboard is intended for researchers and monitoring users. It is not presented as a validated operational warning system.
 
-### Machine Learning
+## Key Features
 
-- **Python 3**
-- **TensorFlow & Keras** – deep learning models (LSTM, GRU, TCN)
-- **Flask** – ML inference API
-- **NumPy & Pandas** – data processing
-- **Scikit-learn** – evaluation & preprocessing
-- **SQLAlchemy** – database ORM
-- **Gunicorn** – production WSGI server
+- Interactive watershed and river-network map
+- Water-level monitoring with station status and history
+- Five-hour flood-level forecasts
+- Rainfall and water-quality visualization
+- Searchable stations with detailed monitoring pages
 
-## Requirements
+Additional monitoring and analysis features are under active development.
 
-- **Node.js** >= 16.x (recommended)
-- **npm** or **yarn**
+## Study Area
 
-## Getting Started
+The Welang River Basin covers monitoring locations along the Welang river system in Pasuruan. The bundled station dataset contains 15 locations, including Dhompo near the downstream section. Each station record includes WGS84 coordinates and a coordinate-confidence label.
 
-### 1. Clone the repository
+The map also includes Surabaya monitoring locations, the city river network, and East Java regional context. Watershed and administrative boundaries come from Badan Informasi Geospasial (BIG). River features come from OpenStreetMap and are clipped to the relevant study boundary.
 
-```bash
-git clone https://github.com/SomeRandomDolphin/ffws-frontend
+## Data Sources
+
+| Data | Source | Format | Usage |
+|---|---|---|---|
+| Welang watershed boundary | BIG Atlas Wilayah Sungai, object 11622 | GeoJSON | Watershed map layer |
+| Administrative boundaries and river networks | BIG and OpenStreetMap contributors through Overpass API | GeoJSON | Regional context and river visualization |
+| Elevation and station sub-watersheds | DEMNAS from BIG, processed with WhiteboxTools | Raster input and GeoJSON output | Local drainage delineation |
+| Welang water level, rainfall, and water quality | Private sensors | JSON | Monitoring and forecast inputs |
+
+## System Architecture
+
+```mermaid
+flowchart LR
+    A[Sensor and Hydrological Data] --> B[FFWS Backend API]
+    C[Machine Learning Forecast Service] --> B
+    B --> D[Next.js API Route]
+    E[GeoJSON and Station Data] --> F[Frontend Dashboard]
+    D --> F
+    G[External Basemap Services] --> F
 ```
 
-### 2. Install dependencies
+The frontend consumes REST data from the backend service. The backend integrates with the machine learning service for flood-level forecasting and analytics. Bundled GeoJSON and station files are loaded directly by the frontend.
 
-Using npm:
+## Technology Stack
 
-```bash
-npm install
+- Next.js 16 and React 19
+- TypeScript
+- MapLibre GL for interactive maps
+- Recharts for station history charts
+- Standalone Next.js output for container deployment
+
+## Local Development
+
+Requirements:
+
+- Node.js 22
+- npm
+
+Install dependencies and start the development server:
+
+```powershell
+npm ci
+npm run dev
 ```
 
-Or using yarn:
+Open `http://localhost:3000`.
 
-```bash
-yarn install
-```
+The pre-development script copies the required MapLibre worker files to `public/vendor`.
 
-### 3. Configure environment (optional but recommended)
+## Production Build
 
-Create a `.env` file in the root directory and set your backend API base URL:
-
-```env
-REACT_APP_API_BASE_URL=http://localhost:8000/api
-```
-
-> Adjust the URL based on your backend deployment.
-
-### 4. Run the development server
-
-```bash
-npm start
-```
-
-The app will be available at:
-
-```
-http://localhost:3000
-```
-
-## Available Scripts
-
-- **Start development server**
-
-```bash
-npm start
-```
-
-- **Build for production**
-
-```bash
+```powershell
 npm run build
 ```
 
-Generates an optimized production build in the `build/` folder.
-
-- **Run tests**
-
-```bash
-npm test
-```
-
-- **Eject (advanced)**
-
-```bash
-npm run eject
-```
-
-> ⚠️ This is irreversible. Use only if you need full control over the configuration.
-
-## Project Features
-
-- Real-time and historical water level visualization
-- Rainfall and flood forecasting charts
-- Interactive river and monitoring station maps
-- Responsive dashboard UI
-
-## Build & Deployment Notes
-
-- The project uses **Create React App** with `homepage` set to `.` for relative paths.
-- After running `npm run build`, deploy the contents of the `build/` directory to your web server.
+The `Dockerfile` builds the standalone Next.js output and runs `node server.js` on port 3000.
 
 ## Related Repositories
 
-- **FFWS Frontend**
-  [https://github.com/SomeRandomDolphin/ffws-frontend](https://github.com/SomeRandomDolphin/ffws-frontend)
+- [FFWS Frontend](https://github.com/SomeRandomDolphin/ffws-frontend)
+- [FFWS Backend](https://github.com/SomeRandomDolphin/ffws-backend)
+- [FFWS Machine Learning](https://github.com/SomeRandomDolphin/ffws-ml)
 
-- **FFWS Backend**
-  [https://github.com/SomeRandomDolphin/ffws-backend](https://github.com/SomeRandomDolphin/ffws-backend)
+## Funding and Affiliation
 
-- **FFWS Machine Learning**
-  [https://github.com/SomeRandomDolphin/ffws-ml](https://github.com/SomeRandomDolphin/ffws-ml)
+This project is funded through a research program at Institut Teknologi Sepuluh Nopember (ITS) and developed by the Department of Civil Engineering.
 
-The frontend consumes REST APIs from the backend service, while the backend integrates with the ML service for flood level forecasting and analytics.
-
-## License
-
-This project is for government and research use under the Flood Forecasting Warning System initiative.
+The project supports government and research activities under the Flood Forecasting Warning System initiative.
