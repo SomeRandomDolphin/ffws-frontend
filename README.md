@@ -32,3 +32,15 @@ Station labels use collision detection and give priority to the selected station
 ## Verification
 
 Run `npm run build`, then check the application at widths of 375, 768, and 1440 pixels. Verify keyboard navigation, station search and selection, closing panels with Escape, layer controls, detail-page navigation, reduced motion, and browser console errors.
+
+## Related repositories
+
+- [FFWS Frontend](https://github.com/SomeRandomDolphin/ffws-frontend)
+- [FFWS Backend](https://github.com/SomeRandomDolphin/ffws-backend)
+- [FFWS Machine Learning](https://github.com/SomeRandomDolphin/ffws-ml)
+
+The frontend consumes REST APIs from the backend service. The backend integrates with the machine learning service for flood-level forecasting and analytics.
+
+## License
+
+This project is for government and research use under the Flood Forecasting Warning System initiative.
