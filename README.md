@@ -1,45 +1,118 @@
-# ITS Water Dashboard frontend
+# Flood Forecasting Dashboard
 
-This Next.js application monitors water resources in the Welang river basin and Surabaya. Welang station readings, history, forecasts, rainfall, and water quality currently use deterministic simulation data. The `/api/surabaya` endpoint forwards readings from the configured source and preserves its source status when live data is unavailable.
+A web-based dashboard for monitoring river conditions, water levels, rainfall, water quality, and flood risk in the Welang River Basin and Surabaya.
 
-## Run locally
+> Dashboard screenshot or GIF has not been added yet.
+
+## Overview
+
+Flood monitoring requires hydrological readings, forecast results, and geographic context to be reviewed together. This dashboard combines those inputs in an interactive map and station-detail pages.
+
+The primary study area is the Welang River Basin in Pasuruan, East Java. The application also includes monitoring locations and river data for Surabaya. Users can inspect watershed boundaries, river networks, monitoring stations, simulated rainfall, water-level history, and short-term forecasts.
+
+Welang readings and forecasts currently use deterministic simulation data. Surabaya pages request data through the frontend API route and show source freshness or connection failures when live readings are unavailable. The dashboard is intended for researchers and monitoring users. It is not presented as a validated operational warning system.
+
+## Key Features
+
+- Interactive map for East Java, the Welang River Basin, and Surabaya
+- Watershed, sub-watershed, administrative-boundary, and river-network layers
+- Water-level readings with status labels and update times
+- Five-hour water-level forecasts and historical charts
+- Rainfall and water-quality visualization
+- Searchable monitoring stations and station-detail pages
+- OpenStreetMap, BIG Rupabumi Indonesia, and Esri satellite basemaps
+- Layer visibility and opacity controls
+- Keyboard-accessible panels with reduced-motion support
+- Loading, unavailable-source, and stale-data states for Surabaya readings
+
+## Dashboard Preview
+
+Screenshot: not yet added.
+
+GIF: not yet added.
+
+Deployed URL: not yet published.
+
+To run the dashboard locally, follow the instructions in [Local Development](#local-development).
+
+## Study Area
+
+The Welang River Basin covers monitoring locations along the Welang river system in Pasuruan. The bundled station dataset contains 15 locations, including Dhompo near the downstream section. Each station record includes WGS84 coordinates and a coordinate-confidence label.
+
+The map also includes Surabaya monitoring locations, the city river network, and East Java regional context. Watershed and administrative boundaries come from Badan Informasi Geospasial (BIG). River features come from OpenStreetMap and are clipped to the relevant study boundary.
+
+## Data Sources
+
+| Data | Source | Format | Usage |
+|---|---|---|---|
+| Welang watershed boundary | BIG Atlas Wilayah Sungai, object 11622 | GeoJSON | Watershed map layer |
+| Administrative boundaries | BIG Batas Wilayah Administrasi | GeoJSON | East Java regional context |
+| Welang, Surabaya, and East Java rivers | OpenStreetMap contributors through Overpass API | GeoJSON | River-network visualization |
+| Elevation and station sub-watersheds | DEMNAS from BIG, processed with WhiteboxTools | Raster input and GeoJSON output | Local drainage delineation |
+| Welang monitoring stations | Project station dataset | JSON | Station locations and metadata |
+| Welang water level, rainfall, and water quality | Deterministic frontend simulation | TypeScript data objects | Dashboard demonstration and interaction testing |
+| Surabaya readings and forecasts | FFWS backend through `/api/surabaya` | JSON | Live or last-known monitoring when available |
+| Basemaps | OpenStreetMap, BIG, Esri, and OpenTopoMap fallback | Raster map tiles | Geographic reference |
+
+Source notes and processing metadata are stored with the datasets in `public/geo`.
+
+## System Architecture
+
+```mermaid
+flowchart LR
+    A[Sensor and Hydrological Data] --> B[FFWS Backend API]
+    C[Machine Learning Forecast Service] --> B
+    B --> D[Next.js API Route]
+    E[GeoJSON and Station Data] --> F[Frontend Dashboard]
+    D --> F
+    G[External Basemap Services] --> F
+```
+
+The frontend consumes REST data from the backend service. The backend integrates with the machine learning service for flood-level forecasting and analytics. Bundled GeoJSON and station files are loaded directly by the frontend.
+
+## Technology Stack
+
+- Next.js 16 and React 19
+- TypeScript
+- MapLibre GL for interactive maps
+- Recharts for station history charts
+- Standalone Next.js output for container deployment
+
+## Local Development
+
+Requirements:
+
+- Node.js 22
+- npm
+
+Install dependencies and start the development server:
 
 ```powershell
 npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000`. The map starts with an East Java overview and can focus on the Welang river basin or Surabaya. Search selects and centers a station. Selecting a marker opens its reading, status, and detail link.
+Open `http://localhost:3000`.
 
-If the primary basemap fails or takes more than 10 seconds to load, the map switches to OpenTopoMap. After the connection recovers, use "Coba muat peta lagi" to retry. Reloading the basemap does not reset the selected station or camera position.
+The pre-development script copies the required MapLibre worker files to `public/vendor`. This generated directory is excluded from version control.
 
-Welang status colors and deterministic values come from `src/lib/demo-data.ts`. Station data is stored in `public/data`, while administrative boundaries and river networks are stored in `public/geo`. Welang sensor readings remain simulated and do not require a backend service.
-
-## Production build
+## Production Build
 
 ```powershell
 npm run build
 ```
 
-The `Dockerfile` builds the standalone Next.js output and runs it with `node server.js` on port 3000.
-
-## Presentation structure
-
-Shared tokens, typography, controls, and station-detail styles are defined in `src/app/globals.css`. Dashboard layout and map interface styles are defined in `src/app/map-dashboard.css`. The application uses local SVG icons without an additional icon dependency.
-
-Station labels use collision detection and give priority to the selected station. Markers remain keyboard-focusable and searchable when labels are hidden. The application disables unnecessary animation when the user prefers reduced motion.
+The `Dockerfile` builds the standalone Next.js output and runs `node server.js` on port 3000.
 
 ## Verification
 
-Run `npm run build`, then check the application at widths of 375, 768, and 1440 pixels. Verify keyboard navigation, station search and selection, closing panels with Escape, layer controls, detail-page navigation, reduced motion, and browser console errors.
+After a production build, check the dashboard at widths of 375, 768, and 1440 pixels. Verify keyboard navigation, station search and selection, panel closing with Escape, layer controls, detail-page navigation, reduced motion, and browser console errors.
 
-## Related repositories
+## Related Repositories
 
 - [FFWS Frontend](https://github.com/SomeRandomDolphin/ffws-frontend)
 - [FFWS Backend](https://github.com/SomeRandomDolphin/ffws-backend)
 - [FFWS Machine Learning](https://github.com/SomeRandomDolphin/ffws-ml)
-
-The frontend consumes REST APIs from the backend service. The backend integrates with the machine learning service for flood-level forecasting and analytics.
 
 ## License
 
