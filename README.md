@@ -45,7 +45,7 @@ The map also includes Surabaya monitoring locations, the city river network, and
 | Welang watershed boundary | BIG Atlas Wilayah Sungai, object 11622 | GeoJSON | Watershed map layer |
 | Administrative boundaries and river networks | BIG and OpenStreetMap contributors through Overpass API | GeoJSON | Regional context and river visualization |
 | Elevation and station sub-watersheds | DEMNAS from BIG, processed with WhiteboxTools | Raster input and GeoJSON output | Local drainage delineation |
-| Welang water level, rainfall, and water quality | Private sensors; the current frontend uses simulation data | JSON | Monitoring and forecast inputs |
+| Welang water level, rainfall, and water quality | Private sensors | JSON | Monitoring and forecast inputs |
 
 Source notes and processing metadata are stored with the datasets in `public/geo`.
 
