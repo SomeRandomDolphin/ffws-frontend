@@ -1,32 +1,34 @@
-# Welang Water Monitor frontend
+# ITS Water Dashboard frontend
 
-Next.js migration of the active Dash monitor. The current version is intentionally demo-first: `src/lib/demo-data.ts` provides deterministic station, history, forecast, rainfall, and five-parameter water-quality data while the FastAPI service remains available separately on port 8000.
+Frontend Next.js untuk pemantauan sumber daya air DAS Welang dan Surabaya. Data stasiun Welang, riwayat, prakiraan, hujan, dan kualitas air saat ini bersifat simulasi deterministik. Endpoint `/api/surabaya` meneruskan pembacaan dari sumber yang dikonfigurasi aplikasi dan mempertahankan status sumber ketika data live tidak tersedia.
 
-## Run locally
+## Menjalankan secara lokal
 
 ```powershell
-npm install
+npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000`. The map starts at the East Java overview and drills into the Welang basin. Bundled layers include BIG administrative/basin boundaries, OSM rivers, DEMNAS-derived station sub-basins, rainfall symbols, water-quality rings, and the 15 monitoring stations.
+Buka `http://localhost:3000`. Peta dimulai dari cakupan Jawa Timur dan dapat difokuskan ke DAS Welang atau Surabaya. Pencarian memilih dan memusatkan stasiun; pemilihan marker membuka pembacaan, status, serta tautan detail.
 
-If the primary basemap fails or takes more than 10 seconds to load, the main map switches to OpenTopoMap automatically. If both providers fail, use “Coba muat peta lagi” after the connection recovers; this refreshes tile sources without resetting the station selection or camera. Basemap recovery is independent of station markers and illustrative river/basin layers.
+Jika basemap utama gagal atau memerlukan lebih dari 10 detik untuk dimuat, peta beralih ke OpenTopoMap. Gunakan “Coba muat peta lagi” setelah koneksi pulih. Pemulihan basemap tidak mengatur ulang stasiun atau posisi kamera yang dipilih.
 
-The 15 station markers and their HTML labels render independently of tile loading. Search selects and centers a station; clicking a marker opens its current simulated reading, detail link, and chart action. The legend starts open, while Overview and the history chart start closed. On mobile the side panel becomes a scrollable bottom panel. The timeline changes simulated readings without rebuilding the map or resetting its camera.
+Warna status dan data deterministik Welang berasal dari `src/lib/demo-data.ts`. Data stasiun berada di `public/data`, sedangkan batas wilayah dan jaringan sungai berada di `public/geo`. Nilai sensor Welang tetap berupa simulasi dan tidak memerlukan backend.
 
-Station status colors and deterministic rainfall/quality values come from `src/lib/demo-data.ts`. Basin and administrative boundaries come from BIG, rivers from OpenStreetMap, and sub-basins from a reproducible DEMNAS/WhiteboxTools pipeline in `scripts/build_geodata.py`. The local Surabaya river layer includes river, stream, and canal features clipped to the BIG city boundary. Sensor values remain simulation data; no backend connection is required.
-
-Validation: `npx tsc --noEmit --incremental false` and `npm run build`. Browser checks should cover all 15 markers on desktop/mobile, keyboard and search selection, chart controls, layer toggles, timeline updates, and failed tile requests.
-
-## Frontend presentation
-
-Shared palette, typography, controls, and station-detail styles live in `src/app/globals.css`; dashboard layout and map UI live in `src/app/map-dashboard.css`. Icons are local SVGs with no added package dependency. Closing panels remain mounted for their 220 ms transition; reduced-motion preferences disable animation. On mobile, opening the chart closes the information panel to preserve map space.
-
-Station labels are placed around markers with collision detection, prioritizing the selected station. Labels without enough room are hidden; their markers remain focusable and searchable. After a user pans, zooms, or searches, panel resizing preserves the camera. “Tampilkan semua stasiun” restores framing of all stations.
-
-The Dash fallback remains available with:
+## Production build
 
 ```powershell
-python run_dashboard.py
+npm run build
 ```
+
+`Dockerfile` membangun output standalone Next.js dan menjalankannya dengan `node server.js` pada port 3000.
+
+## Struktur presentasi
+
+Token bersama, tipografi, kontrol, dan gaya detail stasiun berada di `src/app/globals.css`. Tata letak dashboard dan antarmuka peta berada di `src/app/map-dashboard.css`. Ikon menggunakan SVG lokal tanpa dependency ikon tambahan.
+
+Label stasiun menggunakan deteksi benturan dan memprioritaskan stasiun terpilih. Marker tetap dapat difokuskan dengan keyboard dan dicari ketika label disembunyikan. Preferensi reduced motion menonaktifkan animasi yang tidak diperlukan.
+
+## Verifikasi
+
+Jalankan `npm run build`, lalu periksa browser pada lebar 375, 768, dan 1440px. Periksa navigasi keyboard, pencarian dan pemilihan stasiun, penutupan panel dengan Escape, kontrol lapisan, navigasi halaman detail, reduced motion, serta error console.
