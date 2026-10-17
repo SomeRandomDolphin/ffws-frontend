@@ -85,6 +85,28 @@ npm run build
 
 The `Dockerfile` builds the standalone Next.js output and runs `node server.js` on port 3000.
 
+### Production stack
+
+The production Compose stack runs this frontend together with the FastAPI data
+service in `../backend`. It does not require prediction models to become healthy;
+the health check verifies the Surabaya database snapshot path instead.
+
+Create the backend database configuration first:
+
+```powershell
+Copy-Item ..\backend\configs\surabaya\database.example.yaml ..\backend\configs\surabaya\database.local.yaml
+```
+
+Fill in the read-only MySQL credentials, then start the stack:
+
+```powershell
+Copy-Item .env.production.example .env.production
+docker compose --env-file .env.production -f compose.production.yml up -d --build
+```
+
+The frontend is available on port `3000` by default. `GET /api/health` reports
+whether FastAPI is reachable and whether cached database readings are available.
+
 ## Related Repositories
 
 - [FFWS Frontend](https://github.com/SomeRandomDolphin/ffws-frontend)
