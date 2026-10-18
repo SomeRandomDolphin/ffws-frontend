@@ -14,12 +14,12 @@ x-monitoring: &monitoring
     TELEGRAM_ENABLED: "${TELEGRAM_ENABLED:-false}"
     WELANG_API_URL: ${WELANG_API_URL:-}
     WELANG_API_TOKEN: ${WELANG_API_TOKEN:-}
-    WELANG_EXCEL_PATH: /app/imports/welang.xlsx
+    WELANG_IMPORT_PATH: ${WELANG_IMPORT_PATH:-/app/imports/history}
   volumes:
     - exports:/app/exports
     - type: bind
-      source: ../backend/services/monitoring-api/imports
-      target: /app/imports
+      source: ../backend/services/monitoring-api/imports/history
+      target: /app/imports/history
       read_only: true
       bind:
         create_host_path: false

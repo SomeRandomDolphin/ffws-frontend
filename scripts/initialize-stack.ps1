@@ -17,7 +17,7 @@ foreach ($key in @('ARCHIVE_PASSWORD', 'ARCHIVE_ROOT_PASSWORD')) {
 }
 if (-not ($lines | Where-Object { $_ -match '^FFWS_BIND_ADDRESS=' })) { $lines += 'FFWS_BIND_ADDRESS=127.0.0.1' }
 [IO.File]::WriteAllLines($envPath, [string[]]$lines, [Text.UTF8Encoding]::new($false))
-$importsPath = Join-Path $monitoringRoot 'imports'
+$importsPath = Join-Path $monitoringRoot 'imports\history'
 New-Item -ItemType Directory -Force -Path $importsPath | Out-Null
 $databasePath = Join-Path $monitoringRoot 'configs\surabaya\database.local.yaml'
 if (-not (Test-Path -LiteralPath $databasePath)) {

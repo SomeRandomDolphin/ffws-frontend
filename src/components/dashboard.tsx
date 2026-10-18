@@ -65,7 +65,7 @@ export default function Dashboard() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchPointerFocus, setSearchPointerFocus] = useState(false);
   const [focusRequest, setFocusRequest] = useState<{ name: string; sequence: number } | null>(null);
-  const { data: welangArchive } = useArchive<{ stations: ArchiveStation[] }>("stations?region=welang");
+  const { data: welangArchive, error: welangError } = useArchive<{ stations: ArchiveStation[] }>("stations?region=welang");
   const snapshot = useMemo(() => ({ timestamp: "Waktu pengamatan per stasiun", stations: mapWelangStations(welangArchive?.stations ?? []) }), [welangArchive]);
   const station = snapshot.stations.find((item) => item.name === selected) ?? snapshot.stations[13];
   const normalizedQuery = query.trim().toLowerCase();
@@ -151,7 +151,7 @@ export default function Dashboard() {
            {searchOpen && <div id="station-results" className="station-results"><small>{scopedResults.length + scopedLiveResults.length} stasiun ditemukan</small>{scopedLiveResults.map(item => <button key={item.id} onClick={() => selectLive(item)}><i style={{ background: item.state === "live" && !liveError ? connectionColors.live : connectionColors.delayed }} /><span>{item.name}</span><small>{liveError ? "Koneksi terputus" : liveStateLabel[item.state]}</small></button>)}{scopedResults.map((item) => <button key={item.name} onClick={() => searchSelect(item)}><i style={{ background: item.color }} /><span>{item.name}</span><small>{item.sourceLabel ?? "Data belum tersedia"}</small></button>)}{!scopedResults.length && !scopedLiveResults.length && <p>Nama tidak ditemukan. Coba nama stasiun lain.</p>}</div>}
         </div>
         {region === "surabaya" && !liveOpen && <div className="surabaya-stations"><details><summary>Stasiun Surabaya <span>{liveStations.length}</span></summary><div className="surabaya-station-list">{liveError && <p role="status">{liveError}</p>}{!live && !liveError && <p>Memuat pembacaan…</p>}{liveStations.map(item => <button key={item.id} onClick={() => selectLive(item)}><span>{item.name}</span><small>{liveError ? "Koneksi terputus" : liveStateLabel[item.state]} · {liveTime(item.observedAt)}</small></button>)}</div></details></div>}
-        {region === "welang" && !welangDrawerOpen && <div className="welang-stations"><details><summary>Stasiun DAS Welang <span>{snapshot.stations.length}</span></summary><div className="welang-station-list">{snapshot.stations.map(item => <button key={item.name} onClick={() => selectStation(item)}><span>{item.name}</span><small>{item.sourceLabel} · {Number.isFinite(item.valueM) ? `${item.valueM.toFixed(2)} m` : "—"}</small></button>)}</div></details></div>}
+        {region === "welang" && !welangDrawerOpen && <div className="welang-stations">{welangError && <p role="status" className="live-note">{welangError}</p>}{!welangArchive && !welangError && <p role="status" className="live-note">Memuat data DAS Welang…</p>}<details><summary>Stasiun DAS Welang <span>{snapshot.stations.length}</span></summary><div className="welang-station-list">{snapshot.stations.map(item => <button key={item.name} onClick={() => selectStation(item)}><span>{item.name}</span><small>{item.sourceLabel} · {Number.isFinite(item.valueM) ? `${item.valueM.toFixed(2)} m` : "—"}</small></button>)}</div></details></div>}
         {liveOpen && (
           <aside className="live-drawer" aria-label="Detail sensor Surabaya" onKeyDown={(event) => { if (event.key === "Escape") closeLive(); }}>
             <div className="live-drawer-topbar">
@@ -167,6 +167,7 @@ export default function Dashboard() {
               <strong>{station.name}</strong>
               <button className="live-close" aria-label="Tutup detail" onClick={() => setWelangDrawerOpen(false)}><span aria-hidden="true">×</span></button>
             </div>
+            {welangError && <p role="status" className="live-note">{welangError}</p>}
             <WelangStationPanel station={station} showHeading={false} />
           </aside>
         )}
