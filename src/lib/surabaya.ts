@@ -1,6 +1,6 @@
 export const surabayaNames = ["Hang Tuah", "Kalibokor", "Rumah Pompa Pucang", "Sebrang Perpustakaan Jawa Timur"] as const;
-export type LiveForecast = { method: "urban_file" | "persistence" | "unavailable"; issuedAt: string | null; reason: string; points: { leadHours: number; time: string; valueCm: number }[] };
-export type LiveSensor = { id: string; valueCm: number | null; history: { time: string; valueCm: number | null }[]; forecast: LiveForecast };
+export type LiveForecast = { method: "urban_file" | "persistence" | "unavailable"; issuedAt: string | null; reason: string; points: { leadHours: number; time: string; valueCm: number; waterLevelCm?: number | null }[] };
+export type LiveSensor = { id: string; valueCm: number | null; referenceCm?: number | null; waterLevelCm?: number | null; capacityPercent?: number | null; history: { time: string; valueCm: number | null; waterLevelCm?: number | null }[]; forecast: LiveForecast };
 export type LiveStation = {
   id: string; name: string; latitude: number | null; longitude: number | null;
   coordinateSource: string | null; coordinateVerified: boolean;

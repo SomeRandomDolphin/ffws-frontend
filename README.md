@@ -10,13 +10,13 @@ Flood monitoring requires hydrological readings, forecast results, and geographi
 
 The primary study area is the Welang River Basin in Pasuruan, East Java. The application also includes monitoring locations and river data for Surabaya. Users can inspect watershed boundaries, river networks, monitoring stations, simulated rainfall, water-level history, and short-term forecasts.
 
-Welang readings and forecasts currently use deterministic simulation data. Surabaya pages request data through the frontend API route and show source freshness or connection failures when live readings are unavailable. The dashboard is intended for researchers and monitoring users. It is not presented as a validated operational warning system.
+Welang currently uses historical Excel readings for Purwodadi and Dhompo; other Welang stations retain their map locations and show unavailable readings. Surabaya reads telemetry through a read-only collector. Both regions use a persistent MySQL archive for station charts and monthly Excel downloads. Prediction models and Telegram are disabled by default. The dashboard is intended for researchers and monitoring users and is not a validated operational warning system.
 
 ## Key Features
 
 - Interactive watershed and river-network map
 - Water-level monitoring with station status and history
-- Five-hour flood-level forecasts
+- Optional forecast integration, disabled by default
 - Rainfall and water-quality visualization
 - Searchable stations with detailed monitoring pages
 
@@ -35,7 +35,8 @@ The map also includes Surabaya monitoring locations, the city river network, and
 | Welang watershed boundary | BIG Atlas Wilayah Sungai, object 11622 | GeoJSON | Watershed map layer |
 | Administrative boundaries and river networks | BIG and OpenStreetMap contributors through Overpass API | GeoJSON | Regional context and river visualization |
 | Elevation and station sub-watersheds | DEMNAS from BIG, processed with WhiteboxTools | Raster input and GeoJSON output | Local drainage delineation |
-| Welang water level, rainfall, and water quality | Private sensors | JSON | Monitoring and forecast inputs |
+| Welang water level and rainfall | Operator-provided historical dataset | Excel | Historical observations; timestamp and source retained |
+| Surabaya telemetry | Four configured read-only MySQL sources | MySQL / REST | Monitoring archive and station history |
 
 ## System Architecture
 
@@ -43,13 +44,13 @@ The map also includes Surabaya monitoring locations, the city river network, and
 flowchart LR
     A[Sensor and Hydrological Data] --> B[FFWS Backend API]
     C[Machine Learning Forecast Service] --> B
-    B --> D[Next.js API Route]
+    B --> D[Browser API Client]
     E[GeoJSON and Station Data] --> F[Frontend Dashboard]
     D --> F
     G[External Basemap Services] --> F
 ```
 
-The frontend consumes REST data from the backend service. The backend integrates with the machine learning service for flood-level forecasting and analytics. Bundled GeoJSON and station files are loaded directly by the frontend.
+The static frontend consumes the monitoring REST API directly from the browser. The separate backend reads sensor databases, imports Welang Excel observations, and serves archived history and exports. Bundled GeoJSON and station files are loaded directly by the frontend.
 
 ## Technology Stack
 
@@ -57,7 +58,7 @@ The frontend consumes REST data from the backend service. The backend integrates
 - TypeScript
 - MapLibre GL for interactive maps
 - Recharts for station history charts
-- Standalone Next.js output for container deployment
+- Static Next.js export served by Nginx
 
 ## Local Development
 
@@ -81,31 +82,23 @@ The pre-development script copies the required MapLibre worker files to `public/
 
 ```powershell
 npm run build
+npm start
 ```
 
-The `Dockerfile` builds the standalone Next.js output and runs `node server.js` on port 3000.
+`npm start` serves the static `out` directory on `127.0.0.1:3000`. Use `PORT` or `--port` to choose another port. This server serves files only; configure the API origin at build time or provide the same-origin reverse proxy described in `DEPLOYMENT.md`.
+
+The `Dockerfile` builds static HTML, CSS, and JavaScript and serves the `out` directory with Nginx on port 3000. Runtime data is fetched by the browser from FastAPI through `/monitoring-api`; no Next.js API server is required. Sensor references and water-level calculations are owned by FastAPI; the frontend only selects the API fields and converts display units.
 
 ### Production stack
 
-The production Compose stack runs this frontend together with the FastAPI data
-service in `../backend`. It does not require prediction models to become healthy;
-the health check verifies the Surabaya database snapshot path instead.
+The combined stack preserves Laravel, adds FastAPI and an independent data
+collector, and stores source observations in a dedicated MySQL archive. Models
+and Telegram are disabled by default. Welang currently uses historical Excel
+for Purwodadi and Dhompo; other stations remain visible with unavailable data.
+Station pages provide archive-backed charts and monthly Excel downloads.
 
-Create the backend database configuration first:
-
-```powershell
-Copy-Item ..\backend\configs\surabaya\database.example.yaml ..\backend\configs\surabaya\database.local.yaml
-```
-
-Fill in the read-only MySQL credentials, then start the stack:
-
-```powershell
-Copy-Item .env.production.example .env.production
-docker compose --env-file .env.production -f compose.production.yml up -d --build
-```
-
-The frontend is available on port `3000` by default. `GET /api/health` reports
-whether FastAPI is reachable and whether cached database readings are available.
+Follow [DEPLOYMENT.md](DEPLOYMENT.md) for branch requirements, private configuration,
+setup, existing Laravel database integration, domain routing, backups and rollback.
 
 ## Related Repositories
 

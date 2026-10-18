@@ -7,3 +7,7 @@ npm-debug.log*
 !.env.production.example
 .playwright-cli
 public/vendor
+.integration
+fastapi-source.zip
+output
+backups

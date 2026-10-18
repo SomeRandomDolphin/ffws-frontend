@@ -90,9 +90,9 @@ export default function MapView(props: Props) {
       if(basinData.current.features.length && !insideBasin([station.longitude,station.latitude],basinData.current)) addText("small","Di luar batas DAS sumber BIG","popup-time");
       addText("strong", station.name, "popup-station-name");
       addText("small", "Stasiun pemantauan · DAS Welang", "popup-kicker");
-      addText("span", station.valueM.toFixed(2) + " m", "popup-reading");
-      addText("small", `Waktu data · ${latest.current.timeLabel}`, "popup-time");
-      addText("small", `${station.delta3hM >= 0 ? "Naik" : "Turun"} ${Math.abs(station.delta3hM).toFixed(2)} m dalam 3 jam`, "popup-trend");
+      addText("span", Number.isFinite(station.valueM) ? station.valueM.toFixed(2) + " m" : "Data belum tersedia", "popup-reading");
+      addText("small", `Waktu data · ${station.observedAt ? liveTime(station.observedAt) : "—"}`, "popup-time");
+      addText("small", station.sourceLabel ?? "Data belum tersedia", "popup-trend");
       if (station.status === "Bahaya") {
         const alert = document.createElement("div");
         alert.className = `popup-alert popup-alert-${station.status.toLowerCase()}`;
@@ -112,12 +112,7 @@ export default function MapView(props: Props) {
         const detail = document.createElement("a");
         detail.href = "/station/" + encodeURIComponent(name);
         detail.innerHTML = '<svg class="popup-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Detail stasiun</span>';
-        const alertAction = document.createElement("button");
-        alertAction.className = "popup-alert-action";
-        alertAction.innerHTML = '<svg class="popup-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/></svg><span>Simulasikan notifikasi</span>';
-        alertAction.setAttribute("aria-label", `Simulasikan notifikasi untuk ${station.name}`);
-        alertAction.onclick = () => { alertAction.textContent = "Simulasi selesai, tidak ada notifikasi dikirim"; alertAction.disabled = true; };
-        actions.append(previewBtn, detail, alertAction); content.append(actions);
+        actions.append(previewBtn, detail); content.append(actions);
       }
       const next = new Popup({ closeButton: true, closeOnClick: true, focusAfterOpen: false, offset: 18, maxWidth: "340px", className: "station-popup" })
         .setLngLat([station.longitude, station.latitude]).setDOMContent(content).addTo(map);
@@ -150,12 +145,7 @@ export default function MapView(props: Props) {
         };
         const detail = document.createElement("a"); detail.href = stationUrl;
         detail.innerHTML = '<svg class="popup-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Detail stasiun</span>';
-        const alertAction = document.createElement("button");
-        alertAction.className = "popup-alert-action";
-        alertAction.innerHTML = '<svg class="popup-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/></svg><span>Simulasikan notifikasi</span>';
-        alertAction.setAttribute("aria-label", `Simulasikan notifikasi untuk ${station.name}`);
-        alertAction.onclick = () => { alertAction.textContent = "Simulasi selesai, tidak ada notifikasi dikirim"; alertAction.disabled = true; };
-        actions.append(previewBtn, detail, alertAction); content.append(actions);
+        actions.append(previewBtn, detail); content.append(actions);
       }
       const next = new Popup({ closeButton: true, closeOnClick: true, focusAfterOpen: false, offset: 18, maxWidth: "340px", className: "station-popup" })
         .setLngLat([station.longitude, station.latitude]).setDOMContent(content).addTo(map);
@@ -309,12 +299,12 @@ export default function MapView(props: Props) {
       button.style.display = props.region === "welang" ? "grid" : "none";
       button.style.setProperty("--station-color", station.color);
       button.style.setProperty("--quality-color", qualityColors[station.quality.status]);
-      button.style.setProperty("--rain-size", `${Math.min(52, 18 + station.rainfall30mMm * 2.4)}px`);
+      button.style.setProperty("--rain-size", `${Math.min(52, 18 + (Number.isFinite(station.rainfall30mMm) ? station.rainfall30mMm : 0) * 2.4)}px`);
       button.classList.toggle("is-selected", station.name === props.selected);
       button.classList.toggle("has-label", props.activeLayers.includes("labels"));
-      button.classList.toggle("has-rainfall", props.activeLayers.includes("rainfall"));
-      button.classList.toggle("has-quality", props.activeLayers.includes("quality"));
-      button.setAttribute("aria-label", `${station.name}, muka air ${station.status} ${station.valueM.toFixed(2)} meter, kualitas air ${station.quality.status}, hujan ${station.rainfall30mMm.toFixed(1)} milimeter`);
+      button.classList.toggle("has-rainfall", props.activeLayers.includes("rainfall") && Number.isFinite(station.rainfall30mMm));
+      button.classList.toggle("has-quality", props.activeLayers.includes("quality") && Number.isFinite(station.quality.ph));
+      button.setAttribute("aria-label", `${station.name}, ${Number.isFinite(station.valueM) ? station.valueM.toFixed(2) + " meter" : "data belum tersedia"}`);
       button.setAttribute("aria-pressed", String(station.name === props.selected));
     });
     if (popupStation.current?.kind === "welang") showPopup.current(popupStation.current.name, popupStation.current.menu);
