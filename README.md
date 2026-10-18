@@ -107,6 +107,30 @@ docker compose --env-file .env.production -f compose.production.yml up -d --buil
 The frontend is available on port `3000` by default. `GET /api/health` reports
 whether FastAPI is reachable and whether cached database readings are available.
 
+### Container image registry
+
+The `Build and Publish Docker Image` workflow (`.github/workflows/docker-publish.yml`)
+builds the frontend image for `linux/amd64` and `linux/arm64` and pushes it to the
+GitHub Container Registry (GHCR):
+
+```text
+ghcr.io/somerandomdolphin/ffws-frontend
+```
+
+Images are published on pushes to `master` (tagged `latest`, `master`, and `sha-<short>`,
+plus `vX.Y.Z` and `vX.Y` when a `v*` tag is pushed). Pull requests build the image
+without pushing, and the workflow can also be started manually via `workflow_dispatch`.
+
+Pull the published image with:
+
+```powershell
+docker pull ghcr.io/somerandomdolphin/ffws-frontend:latest
+```
+
+The workflow authenticates with the built-in `GITHUB_TOKEN`, so no extra secrets are
+required. If the package visibility has not been set yet, open the package settings on
+GitHub and grant the repository write access.
+
 ## Related Repositories
 
 - [FFWS Frontend](https://github.com/SomeRandomDolphin/ffws-frontend)
