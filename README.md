@@ -110,7 +110,7 @@ whether FastAPI is reachable and whether cached database readings are available.
 ### Container image registry
 
 The `Build and Publish Docker Image` workflow (`.github/workflows/docker-publish.yml`)
-builds the frontend image for `linux/amd64` and `linux/arm64` and pushes it to the
+builds the frontend image for `linux/amd64` and pushes it to the
 GitHub Container Registry (GHCR):
 
 ```text
@@ -130,6 +130,9 @@ docker pull ghcr.io/somerandomdolphin/ffws-frontend:latest
 The workflow authenticates with the built-in `GITHUB_TOKEN`, so no extra secrets are
 required. If the package visibility has not been set yet, open the package settings on
 GitHub and grant the repository write access.
+
+The image is built only for `linux/amd64`, which runs natively on the GitHub-hosted
+runner. Revisit this if an arm64 deployment target is ever needed.
 
 ## Related Repositories
 
