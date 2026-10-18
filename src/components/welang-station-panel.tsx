@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { StationSnapshot } from "@/lib/types";
 import { chartTheme } from "@/lib/presentation";
@@ -8,22 +7,12 @@ import { type ArchiveSeries, welangId } from "@/lib/monitoring";
 import { useArchive } from "./use-archive";
 import "./surabaya.css";
 
-type Period = "6h" | "24h" | "7d";
-
-const periods: Record<Period, { label: string; hours: number; intervalMinutes: number }> = {
-  "6h": { label: "6 jam", hours: 6, intervalMinutes: 5 },
-  "24h": { label: "24 jam", hours: 24, intervalMinutes: 15 },
-  "7d": { label: "7 hari", hours: 168, intervalMinutes: 30 },
-};
-
 const clockFormat = new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit" });
 const timeFormat = new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 export default function WelangStationPanel({ station, showHeading = true }: { station: StationSnapshot; showHeading?: boolean }) {
-  const [period, setPeriod] = useState<Period>("24h");
-  const periodConfig = periods[period];
   const capacityPercentage = Number.isFinite(station.valueM) && Number.isFinite(station.dangerM) && station.dangerM > 0 ? Math.min(100, Math.max(0, (station.valueM / station.dangerM) * 100)) : null;
-  const { data, error } = useArchive<{ series: ArchiveSeries[] }>(`stations/${welangId(station.name)}/history?hours=${periodConfig.hours}`);
+  const { data, error } = useArchive<{ series: ArchiveSeries[] }>(`stations/${welangId(station.name)}/history?hours=24`);
   const waterSeries = data?.series.find(series => series.metric === "water_level");
   const history = waterSeries?.points.map(point => ({ time: Date.parse(point.time), valueM: point.value == null ? null : waterSeries.unit === "cm" ? point.value / 100 : point.value })).flatMap((point, index, all) => index && point.time - all[index - 1].time > 3600000 ? [{ time: point.time - 1, valueM: null }, point] : [point]) ?? [];
   const number = (value: number, digits: number) => Number.isFinite(value) ? value.toFixed(digits) : "—";
@@ -70,30 +59,8 @@ export default function WelangStationPanel({ station, showHeading = true }: { st
 
       <h3 id="riwayat-sensor">Riwayat muka air</h3>
       <p className="live-note">
-        {error ?? (station.observedAt ? `Pengamatan terakhir: ${timeFormat.format(Date.parse(station.observedAt))} WIB` : "Data belum tersedia")}
+        {error ?? `24 jam sebelum pembacaan terakhir${station.observedAt ? ` · Pengamatan terakhir: ${timeFormat.format(Date.parse(station.observedAt))} WIB` : ""}`}
       </p>
-
-      <div style={{ display: "flex", gap: "6px", marginBottom: "12px" }}>
-        {(Object.keys(periods) as Period[]).map((val) => (
-          <button
-            key={val}
-            type="button"
-            style={{
-              padding: "6px 12px",
-              fontSize: "var(--text-caption)",
-              borderRadius: "var(--radius)",
-              border: "1px solid var(--color-control-border)",
-              background: period === val ? "var(--color-selection-bg)" : "var(--surface)",
-              color: period === val ? "var(--blue)" : "inherit",
-              borderColor: period === val ? "var(--blue)" : "var(--color-control-border)",
-              cursor: "pointer",
-            }}
-            onClick={() => setPeriod(val)}
-          >
-            {periods[val].label}
-          </button>
-        ))}
-      </div>
 
       <div className="live-chart">
         <ResponsiveContainer width="100%" height="100%">

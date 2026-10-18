@@ -112,7 +112,12 @@ export default function MapView(props: Props) {
         const detail = document.createElement("a");
         detail.href = "/station/" + encodeURIComponent(name);
         detail.innerHTML = '<svg class="popup-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Detail stasiun</span>';
-        actions.append(previewBtn, detail); content.append(actions);
+        const alertAction = document.createElement("button");
+        alertAction.className = "popup-alert-action";
+        alertAction.innerHTML = '<svg class="popup-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/></svg><span>Simulasikan notifikasi</span>';
+        alertAction.setAttribute("aria-label", `Simulasikan notifikasi untuk ${station.name}`);
+        alertAction.onclick = () => { alertAction.disabled = true; };
+        actions.append(previewBtn, detail, alertAction); content.append(actions);
       }
       const next = new Popup({ closeButton: true, closeOnClick: true, focusAfterOpen: false, offset: 18, maxWidth: "340px", className: "station-popup" })
         .setLngLat([station.longitude, station.latitude]).setDOMContent(content).addTo(map);
@@ -145,7 +150,12 @@ export default function MapView(props: Props) {
         };
         const detail = document.createElement("a"); detail.href = stationUrl;
         detail.innerHTML = '<svg class="popup-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Detail stasiun</span>';
-        actions.append(previewBtn, detail); content.append(actions);
+        const alertAction = document.createElement("button");
+        alertAction.className = "popup-alert-action";
+        alertAction.innerHTML = '<svg class="popup-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/></svg><span>Simulasikan notifikasi</span>';
+        alertAction.setAttribute("aria-label", `Simulasikan notifikasi untuk ${station.name}`);
+        alertAction.onclick = () => { alertAction.disabled = true; };
+        actions.append(previewBtn, detail, alertAction); content.append(actions);
       }
       const next = new Popup({ closeButton: true, closeOnClick: true, focusAfterOpen: false, offset: 18, maxWidth: "340px", className: "station-popup" })
         .setLngLat([station.longitude, station.latitude]).setDOMContent(content).addTo(map);

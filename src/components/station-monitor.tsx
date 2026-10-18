@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { type ArchiveSeries, type ArchiveStation, archiveStateLabel } from "@/lib/monitoring";
 import { chartTheme } from "@/lib/presentation";
 import { stationInformation } from "@/lib/station-information";
@@ -17,6 +17,16 @@ import "./station-monitor.css";
 
 const time = new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", dateStyle: "medium", timeStyle: "short" });
 const label = (metric: string) => ({ water_level: "Muka air", distance: "Jarak sensor ke permukaan", rainfall: "Curah hujan" } as Record<string, string>)[metric] ?? metric;
+const sensorDescription = (sensor: ArchiveSeries, stationName: string) => {
+  const id = sensor.sensor.toLowerCase();
+  if (isDistanceSensor(sensor) || sensor.metric === "distance") return "Jarak antara sensor dan permukaan air.";
+  if (id === "curah_hujan_1h") return "Jumlah curah hujan yang terkumpul selama satu jam terakhir.";
+  if (id === "jumlah_tip") return "Menghitung berapa kali wadah penakar hujan terisi lalu terjungkit. Setiap jungkit mewakili volume air tertentu yang digunakan untuk menghitung curah hujan.";
+  if (id === "curah_hujan") return "Jumlah air hujan yang terukur pada interval pencatatan sensor.";
+  if (sensor.metric === "water_level") return "Ketinggian permukaan air yang diukur oleh sensor.";
+  if (sensor.metric === "rainfall") return "Jumlah air hujan yang terukur pada interval pencatatan sensor.";
+  return `Nilai ${label(sensor.metric).toLowerCase()} yang diukur oleh sensor.`;
+};
 type ExportJob = { id: string; status: string; error?: string };
 
 export default function StationMonitor({ stationId, name, compact = false }: { stationId: string; name: string; compact?: boolean }) {
@@ -34,11 +44,51 @@ export default function StationMonitor({ stationId, name, compact = false }: { s
   const { data: history, error: historyError } = useArchive<{ series: ArchiveSeries[] }>(`stations/${stationId}/history?hours=${hours}`);
   const rawSeries = history?.series.find(s => `${s.sensor}:${s.metric}` === selected) ?? history?.series.find(s => s.metric === "water_level" || s.metric === "distance") ?? history?.series[0];
   const series = rawSeries ? calibratedSeries(rawSeries) : undefined;
+  const chartUnit = series?.unit === "unverified" ? "" : series?.unit;
+  const chartMeasure = series ? `${label(series.metric)}${chartUnit ? ` (${chartUnit})` : ""}` : "Nilai";
   const points = series?.points.map(point => ({ ...point, time: Date.parse(point.time) })) ?? [];
   const chartPoints = points.flatMap((point, index) => {
     const prior = points[index - 1];
     return prior && point.time - prior.time > 3600000 ? [{ time: point.time - 1, value: null, source: point.source }, point] : [point];
   });
+  const rawHistorySeries = history?.series ?? [];
+  const tabularSeries = rawHistorySeries.map(raw => {
+    const distanceReading = isDistanceSensor(raw) && raw.points.some(point => point.waterLevelCm != null);
+    const referenceCm = raw.referenceCm ?? station?.referenceCm ?? null;
+    return {
+      key: `${raw.sensor}:${raw.metric}`,
+      sensor: formatSensorLabel(raw.sensor, name),
+      parameter: label(raw.metric),
+      unit: distanceReading && referenceCm != null ? "cm" : raw.unit,
+      points: raw.points.slice(-10).map(point => ({
+        ...point,
+        value: distanceReading && referenceCm != null && point.waterLevelCm != null
+          ? Math.max(0, referenceCm - point.waterLevelCm)
+          : point.value,
+      })),
+    };
+  }).concat(rawHistorySeries
+    .filter(raw => raw.points.some(point => point.waterLevelCm != null))
+    .map(raw => ({
+      key: `${raw.sensor}:derived-water-level`,
+      sensor: `Muka air (${formatSensorLabel(raw.sensor, name).replace("Pembacaan Sensor Jarak 1", "Sensor Jarak 1")})`,
+      parameter: "Muka air",
+      unit: "m",
+      points: raw.points.slice(-10).map(point => ({ ...point, value: point.waterLevelCm == null ? null : point.waterLevelCm / 100 })),
+    })))
+    .sort((a, b) => Number(b.key.endsWith(":derived-water-level")) - Number(a.key.endsWith(":derived-water-level")));
+  const tabularRows = (() => {
+    const rows = new Map<number, Record<string, number | null>>();
+    for (const sensor of tabularSeries) {
+      for (const point of sensor.points) {
+        const timestamp = Date.parse(point.time);
+        const row = rows.get(timestamp) ?? {};
+        row[sensor.key] = point.value;
+        rows.set(timestamp, row);
+      }
+    }
+    return [...rows].map(([time, values]) => ({ time, values })).sort((a, b) => b.time - a.time);
+  })();
   const waterSensors = station?.series.filter(item => item.metric === "water_level" || item.metric === "distance") ?? [];
   const activeSensor = waterSensors.find(item => item.sensor === rawSeries?.sensor && item.metric === rawSeries?.metric) ?? waterSensors[0];
   const sensorPoint = activeSensor?.points.at(-1);
@@ -50,7 +100,6 @@ export default function StationMonitor({ stationId, name, compact = false }: { s
   const hasDistance = activeSensor ? isDistanceSensor(activeSensor) || activeSensor.metric === "distance" : false;
   const latitude = station?.latitude ?? information.latitude;
   const longitude = station?.longitude ?? information.longitude;
-  const reading = (value: number | null | undefined, unit?: string) => value == null ? "—" : `${value.toFixed(3)}${unit && unit !== "unverified" ? ` ${unit}` : ""}`;
   const busy = starting || job?.status === "queued" || job?.status === "processing";
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); controller.current?.abort(); }, [stationId]);
 
@@ -92,7 +141,6 @@ export default function StationMonitor({ stationId, name, compact = false }: { s
 
   const content = <>
     <header className="monitor-heading"><h1>{name}</h1>
-      <div className="monitor-identity"><strong>{stationCode}</strong><span>{stationId.startsWith("welang-") ? "DAS Welang · Pasuruan, Jawa Timur" : "Wilayah Surabaya · Jawa Timur"}</span></div>
       <p className="monitor-description">{information.description}</p>
     </header>
     {(error || historyError) && <p role="alert">{error || historyError}</p>}
@@ -114,40 +162,34 @@ export default function StationMonitor({ stationId, name, compact = false }: { s
       <div className="monitor-section-heading"><h2>Riwayat pengamatan</h2></div>
       <div className="history-controls"><div className="monitor-toggle" role="group" aria-label="Rentang riwayat">
         {[6, 24, 168].map(value => <button key={value} aria-pressed={value === hours} onClick={() => setHours(value)}>{value === 168 ? "7 hari" : `${value} jam`}</button>)}
-      </div><button className="archive-download" type="button" disabled={busy || !station?.observedAt} onClick={() => void download()}>{busy ? "Menyiapkan Excel…" : "Unduh Excel 12 bulan"}</button></div>
+      </div><button className="archive-download" type="button" aria-busy={busy} disabled={busy || !station?.observedAt} onClick={() => void download()}>{busy && <span className="archive-download-spinner" aria-hidden="true" />}<span>{busy ? "Menyiapkan data…" : "Unduh data"}</span></button></div>
       {downloadError && <p role="alert">{downloadError}</p>}
-      {job?.status === "ready" && <a href={monitoringApiUrl(`v1/exports/${encodeURIComponent(job.id)}/file`)}>Unduh kembali file Excel</a>}
       {points.length ? <figure className="monitor-chart" aria-label="Grafik riwayat pengamatan"><ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartPoints}><CartesianGrid stroke={chartTheme.grid} /><XAxis dataKey="time" type="number" domain={["dataMin", "dataMax"]} tickFormatter={value => new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", ...(hours > 24 ? { day: "numeric", month: "short" } : {}) }).format(value)} minTickGap={50} />
-          <YAxis domain={["auto", "auto"]} width={60} /><Tooltip labelFormatter={value => `${time.format(Number(value))} WIB`} formatter={value => [value == null ? "—" : `${Number(value).toFixed(3)} ${series?.unit}`, series ? label(series.metric) : "Nilai"]} />
-          <Line dataKey="value" stroke={chartTheme.water} dot={false} connectNulls={false} isAnimationActive={false} /></LineChart>
+        <ComposedChart data={chartPoints} margin={{ top: 20, right: 8, left: 0, bottom: 8 }}><CartesianGrid stroke={chartTheme.grid} vertical={false} /><XAxis dataKey="time" type="number" domain={["dataMin", "dataMax"]} tickCount={6} minTickGap={38} tickFormatter={value => new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", ...(hours > 24 ? { day: "numeric", month: "short" } : {}) }).format(value)} tick={chartTheme.tick} axisLine={{ stroke: chartTheme.grid }} tickLine={false} />
+          <YAxis domain={["auto", "auto"]} width={68} tickFormatter={value => Number(value).toFixed(2)} tick={chartTheme.tick} axisLine={false} tickLine={false} label={{ value: chartMeasure, angle: -90, position: "insideLeft", fill: "var(--muted)", fontSize: 11 }} /><Tooltip content={({ active, payload }) => {
+            const point = payload?.[0]?.payload as (typeof chartPoints)[number] | undefined;
+            return active && point ? <div className="monitor-tooltip"><strong>{time.format(point.time)} WIB</strong><span>{chartMeasure}: {point.value == null ? "—" : `${point.value.toFixed(3)}${chartUnit ? ` ${chartUnit}` : ""}`}</span></div> : null;
+          }} />
+          <Area dataKey="value" fill={chartTheme.rainFill} fillOpacity={0.28} stroke="none" isAnimationActive={false} /><Line dataKey="value" stroke={chartTheme.water} strokeWidth={2.5} dot={false} connectNulls={false} isAnimationActive={false} /></ComposedChart>
       </ResponsiveContainer></figure> : <p role="status">{history ? "Data belum tersedia pada rentang ini." : "Memuat riwayat…"}</p>}
       <details className="history-data"><summary>Lihat data tabular</summary>
-        <div className="monitor-table-wrap"><table className="monitor-table"><caption>10 pengamatan terbaru pada rentang dipilih</caption><thead><tr><th>Waktu (WIB)</th><th>Nilai ({series?.unit ?? "—"})</th><th>Sumber</th></tr></thead><tbody>{points.slice(-10).reverse().map((point, i) => <tr key={`${point.time}:${i}`}><td>{time.format(point.time)}</td><td>{point.value ?? "—"}</td><td>{point.source.startsWith("excel:") ? "Excel historis" : "Arsip sumber stasiun"}</td></tr>)}</tbody></table></div>
+        <div className="monitor-table-wrap"><table className="monitor-table" style={{ minWidth: `${Math.max(620, 190 + tabularSeries.reduce((total, item) => total + (item.key.endsWith(":derived-water-level") ? 190 : 130), 0))}px` }}><caption>10 pengamatan terbaru tiap sensor pada rentang dipilih</caption><thead><tr><th>Waktu (WIB)</th>{tabularSeries.map(sensor => <th key={sensor.key} className={sensor.key.endsWith(":derived-water-level") ? "water-level-column" : undefined}>{sensor.sensor}</th>)}</tr></thead><tbody>{tabularRows.map(row => <tr key={row.time}><td>{time.format(row.time)}</td>{tabularSeries.map(sensor => { const value = row.values[sensor.key]; return <td key={sensor.key} className={sensor.key.endsWith(":derived-water-level") ? "water-level-column" : undefined}>{value == null ? "—" : `${value.toFixed(3)}${sensor.unit !== "unverified" ? ` ${sensor.unit}` : ""}`}</td>; })}</tr>)}</tbody></table></div>
       </details>
     </section>
-    <section className="monitor-section" aria-label="Informasi sensor"><h2>Sensor dan parameter</h2>
-      {station?.series.length ? <div className="monitor-table-wrap"><table className="monitor-table"><caption>Pembacaan terakhir setiap parameter sumber</caption><thead><tr><th>Sensor</th><th>Parameter</th><th>Pembacaan</th><th>Waktu (WIB)</th></tr></thead><tbody>{station.series.map(item => {
-        const point = item.points.at(-1);
-        return <tr key={`${item.sensor}:${item.metric}`}><td>{formatSensorLabel(item.sensor, name)}</td><td>{label(item.metric)}{item.verification === "unverified" && <small>Interpretasi/satuan belum diverifikasi</small>}</td><td>{reading(point?.value, item.unit)}</td><td>{point ? time.format(Date.parse(point.time)) : "—"}</td></tr>;
-      })}</tbody></table></div> : <p>Data sensor belum tersedia.</p>}
+    <section className="monitor-section" aria-label="Informasi sensor"><h2>Keterangan Sensor</h2>
+      {station?.series.length ? <div className="monitor-table-wrap"><table className="monitor-table sensor-description-table"><caption>Daftar sensor dan fungsi pengukurannya</caption><thead><tr><th>Sensor</th><th>Keterangan</th></tr></thead><tbody>{station.series.map(item => <tr key={`${item.sensor}:${item.metric}`}><td>{formatSensorLabel(item.sensor, name)}</td><td>{sensorDescription(item, name)}</td></tr>)}</tbody></table></div> : <p>Data sensor belum tersedia.</p>}
     </section>
-    <section className="monitor-section"><div className="monitor-section-heading"><div><span className="monitor-eyebrow">Konteks lokasi</span><h2>Informasi fasilitas &amp; lokasi</h2></div><Link href={back}>Buka di dashboard peta</Link></div>
+    <section className="monitor-section"><div className="monitor-section-heading"><div><h2>Informasi fasilitas &amp; lokasi</h2></div><Link href={back}>Buka di dashboard peta</Link></div>
       <div className={compact ? undefined : "location-layout"}><div><dl className="station-metadata">
         <div><dt>Kode stasiun</dt><dd>{stationCode}</dd></div>
         <div><dt>Koordinat WGS84</dt><dd>{latitude != null && longitude != null ? `${latitude.toFixed(6)}, ${longitude.toFixed(6)}` : "Belum tercatat"}</dd></div>
         <div><dt>Sumber koordinat</dt><dd>{information.coordinateSourceUrl ? <a href={information.coordinateSourceUrl} target="_blank" rel="noreferrer">{information.coordinateSource}</a> : information.coordinateSource}</dd></div>
         <div><dt>Wilayah hidrologi</dt><dd>{information.region}</dd></div>
         <div><dt>Status data</dt><dd>{station ? archiveStateLabel[station.state] : "Data belum tersedia"}</dd></div>
-      </dl><details className="inline-data"><summary>Rincian sumber dan verifikasi</summary><dl className="station-metadata">
-        <div><dt>ID sumber stasiun</dt><dd>{stationId}</dd></div>
-        <div><dt>Keyakinan koordinat</dt><dd>{information.coordinateConfidence}</dd></div>
-        <div><dt>Sumber pengamatan</dt><dd>{station?.sources.length ? station.sources.map(source => <div className="station-source" key={source.id}>{source.id.startsWith("excel:") ? "Excel historis Welang" : source.id.startsWith("mysql:") ? "Database sensor stasiun" : "API stasiun"}{source.lastSuccess && <small>Sinkronisasi: {time.format(Date.parse(source.lastSuccess))} WIB</small>}</div>) : "Belum ada sumber dengan data"}</dd></div>
-        <div><dt>Prediksi dan ambang</dt><dd>Belum diaktifkan</dd></div>
-      </dl></details></div>
+      </dl></div>
       {!compact && latitude != null && longitude != null && <figure className="location-figure"><LocationMap station={{ name, latitude, longitude }} /></figure>}
       </div>
     </section>
   </>;
-  return compact ? <div className="monitor archive-preview">{content}</div> : <main className="wm-app wm-detail monitor"><header className="wm-header"><WelangBrand href={back} /><span className="detail-header-context">Data lokasi pemantauan</span></header><div className="monitor-body"><Link className="monitor-back" href={back}><Icon name="back" />Kembali ke dashboard peta</Link>{content}</div><SiteFooter /></main>;
+  return compact ? <div className="monitor archive-preview">{content}</div> : <main className="wm-app wm-detail monitor"><header className="wm-header"><WelangBrand href={back} /></header><div className="monitor-body"><Link className="monitor-back" href={back}><Icon name="back" />Kembali ke dashboard peta</Link>{content}</div><SiteFooter /></main>;
 }
