@@ -27,6 +27,11 @@ export function formatSensorLabel(id: string, stationName?: string) {
     if (id.toLowerCase() === "distance2" || id.toLowerCase() === "distance_2") return "Pompa 2";
     if (id.toLowerCase() === "distance") return "Pompa 1";
   }
+  if (id.toLowerCase() === "distance1" || id.toLowerCase() === "distance_1") {
+    return stationName?.toLowerCase().includes("perpustakaan")
+      ? "Pembacaan Sensor Jarak 1"
+      : "Sensor Jarak 1";
+  }
   return id;
 }
 

@@ -4,6 +4,8 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { formatSensorLabel, liveStateLabel, liveTime, type LiveStation } from "@/lib/surabaya";
 import { chartTheme } from "@/lib/presentation";
 import { stationInformation } from "@/lib/station-information";
+import type { ArchiveSeries } from "@/lib/monitoring";
+import { useArchive } from "./use-archive";
 import "./surabaya.css";
 
 export default function LiveStationPanel({ station, disconnected = false }: { station: LiveStation; disconnected?: boolean }) {
@@ -13,11 +15,13 @@ export default function LiveStationPanel({ station, disconnected = false }: { st
   const stale = !station.observedAt || Date.now() - Date.parse(station.observedAt) > 600000;
   const hideForecast = disconnected || stale || station.state !== "live" || sensor?.forecast.method === "unavailable";
   const groundReferenceCm = sensor?.referenceCm ?? null;
-  const history = sensor?.history.map((point, index, all) => ({
+  const { data: archiveHistory, error: historyError } = useArchive<{ series: ArchiveSeries[] }>(sensor ? `stations/${station.id}/history?hours=24&sensor=${encodeURIComponent(sensor.id)}` : null);
+  const historyPoints = archiveHistory?.series.find(item => item.sensor === sensor?.id)?.points ?? [];
+  const history = historyPoints.map((point, index, all) => ({
     time: Date.parse(point.time), valueCm: point.waterLevelCm ?? null,
     // Break lines where the next observation skips a 30-minute interval.
     gap: index > 0 && Date.parse(point.time) - Date.parse(all[index - 1].time) > 3600000,
-  })).flatMap(point => point.gap ? [{ time: point.time - 1, valueCm: null, gap: true }, point] : [point]) ?? [];
+  })).flatMap(point => point.gap ? [{ time: point.time - 1, valueCm: null, gap: true }, point] : [point]);
   const sensorDistanceCm = sensor?.valueCm ?? null;
   // Raw reading, reference and calibrated water level are supplied by the API.
   const waterLevelCm = sensor?.waterLevelCm ?? null;
@@ -27,6 +31,7 @@ export default function LiveStationPanel({ station, disconnected = false }: { st
 
   return <section className="live-station-panel" aria-label={`Data live ${station.name}`}>
     {station.error && <p role="status" className="live-warning">{station.error}</p>}
+    {historyError && <p role="status" className="live-note">{historyError}</p>}
 
     <div className="live-gauge-container">
       {station.sensors.length > 1 && (
@@ -81,13 +86,13 @@ export default function LiveStationPanel({ station, disconnected = false }: { st
       </div>
     </div>
 
-    <h3 id="riwayat-sensor">Riwayat sensor {sensor?.id}</h3>
+    <h3 id="riwayat-sensor">Riwayat sensor {sensor ? formatSensorLabel(sensor.id, station.name) : ""}</h3>
     <p className="live-note">24 jam sebelum pembacaan terakhir · sensor ditampilkan terpisah.</p>
-    {history.length ? <div className="live-chart"><ResponsiveContainer width="100%" height="100%"><LineChart data={history} margin={{ top: 12, right: 16, bottom: 8, left: 0 }}><CartesianGrid stroke={chartTheme.grid} vertical={false} /><XAxis dataKey="time" type="number" domain={["dataMin", "dataMax"]} tickFormatter={value => liveTime(new Date(value).toISOString())} minTickGap={45} tick={chartTheme.tick} /><YAxis domain={["auto", "auto"]} tick={chartTheme.tick} width={55} /><Tooltip contentStyle={chartTheme.tooltip} labelFormatter={value => liveTime(new Date(Number(value)).toISOString())} /><Line dataKey="valueCm" name="Tinggi air" unit=" cm" stroke={chartTheme.water} strokeWidth={2.5} dot={false} connectNulls={false} isAnimationActive={false} /></LineChart></ResponsiveContainer></div> : <p>Riwayat belum tersedia.</p>}
+    {history.length ? <div className="live-chart"><ResponsiveContainer width="100%" height="100%"><LineChart data={history} margin={{ top: 12, right: 16, bottom: 8, left: 0 }}><CartesianGrid stroke={chartTheme.grid} vertical={false} /><XAxis dataKey="time" type="number" domain={["dataMin", "dataMax"]} tickFormatter={value => liveTime(new Date(value).toISOString())} minTickGap={45} tick={chartTheme.tick} /><YAxis domain={["auto", "auto"]} tick={chartTheme.tick} width={55} /><Tooltip contentStyle={chartTheme.tooltip} labelFormatter={value => liveTime(new Date(Number(value)).toISOString())} formatter={value => Number(value).toFixed(3)} /><Line dataKey="valueCm" name="Tinggi air" unit=" cm" stroke={chartTheme.water} strokeWidth={2.5} dot={false} connectNulls={false} isAnimationActive={false} /></LineChart></ResponsiveContainer></div> : <p>{archiveHistory ? "Riwayat belum tersedia." : "Memuat riwayat…"}</p>}
     <h3>Prakiraan +1 sampai +5 jam</h3>
     {hideForecast ? <p className="live-note">{sensor?.forecast.reason ?? "Prediksi terkini tidak tersedia."}</p> : <>
       {!!sensor?.forecast.points.length && <div className="live-table-wrap"><table><caption>Acuan prediksi: {liveTime(sensor.forecast.issuedAt)} · bukan peringatan resmi</caption><thead><tr><th>Waktu berlaku</th><th>Horizon</th><th>Tinggi air</th></tr></thead><tbody>{sensor.forecast.points.map(point => <tr key={point.leadHours}><td>{liveTime(point.time)}</td><td>+{point.leadHours} jam</td><td>{point.waterLevelCm?.toFixed(1) ?? "—"} cm</td></tr>)}</tbody></table></div>}
     </>}
-    <details className="live-extra"><summary>Data hujan dan lokasi</summary>{station.rainfall ? <><p>Hujan: pembacaan mentah, satuan/akumulasi belum dikonfirmasi · {liveTime(station.rainfall.observedAt)}</p>{station.rainfall.error && <p>{station.rainfall.error}</p>}<dl>{Object.entries(station.rainfall.values).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value ?? "—"}</dd></div>)}</dl></> : <p>Data hujan belum tersedia.</p>}{coordinateSource && <a href={coordinateSource} target="_blank" rel="noreferrer">Sumber lokasi</a>}</details>
+    <details className="live-extra"><summary>Data hujan dan lokasi</summary>{station.rainfall ? <>{station.rainfall.error && <p>{station.rainfall.error}</p>}<dl>{Object.entries(station.rainfall.values).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value ?? "—"}</dd></div>)}</dl></> : <p>Data hujan belum tersedia.</p>}{coordinateSource && <a href={coordinateSource} target="_blank" rel="noreferrer">Sumber lokasi</a>}</details>
   </section>;
 }

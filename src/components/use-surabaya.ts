@@ -14,7 +14,7 @@ export function useSurabaya() {
       controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
       try {
-        const snapshot = await monitoringApiJson<LiveSnapshot>("surabaya/snapshot", { cache: "no-store", signal: controller.signal });
+        const snapshot = await monitoringApiJson<LiveSnapshot>("surabaya/snapshot?include_history=false", { cache: "no-store", signal: controller.signal });
         if (!Array.isArray(snapshot.stations)) throw new Error("Format data tidak valid.");
         if (!disposed) { setData(snapshot); setError(null); }
       } catch {
