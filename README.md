@@ -85,20 +85,9 @@ npm run build
 npm start
 ```
 
-`npm start` serves the static `out` directory on `127.0.0.1:3000`. Use `PORT` or `--port` to choose another port. This server serves files only; configure the API origin at build time or provide the same-origin reverse proxy described in `DEPLOYMENT.md`.
+`npm start` serves the static `out` directory on `127.0.0.1:3000`. Use `PORT` or `--port` to choose another port. This server serves files only; configure the API origin at build time or provide a same-origin reverse proxy for `/monitoring-api`.
 
 The `Dockerfile` builds static HTML, CSS, and JavaScript and serves the `out` directory with Nginx on port 3000. Runtime data is fetched by the browser from FastAPI through `/monitoring-api`; no Next.js API server is required. Sensor references and water-level calculations are owned by FastAPI; the frontend only selects the API fields and converts display units.
-
-### Production stack
-
-The combined stack preserves Laravel, adds FastAPI and an independent data
-collector, and stores source observations in a dedicated MySQL archive. Models
-and Telegram are disabled by default. Welang currently uses historical Excel
-for Purwodadi and Dhompo; other stations remain visible with unavailable data.
-Station pages provide archive-backed charts and monthly Excel downloads.
-
-Follow [DEPLOYMENT.md](DEPLOYMENT.md) for branch requirements, private configuration,
-setup, existing Laravel database integration, domain routing, backups and rollback.
 
 ## Related Repositories
 
