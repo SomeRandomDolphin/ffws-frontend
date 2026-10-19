@@ -89,6 +89,33 @@ npm start
 
 The `Dockerfile` builds static HTML, CSS, and JavaScript and serves the `out` directory with Nginx on port 3000. Runtime data is fetched by the browser from FastAPI through `/monitoring-api`; no Next.js API server is required. Sensor references and water-level calculations are owned by FastAPI; the frontend only selects the API fields and converts display units.
 
+### Container image registry
+
+The `Build and Publish Docker Image` workflow (`.github/workflows/docker-publish.yml`)
+builds the frontend image for `linux/amd64` and pushes it to the
+GitHub Container Registry (GHCR):
+
+```text
+ghcr.io/somerandomdolphin/ffws-frontend
+```
+
+Images are published on pushes to `master` (tagged `latest`, `master`, and `sha-<short>`,
+plus `vX.Y.Z` and `vX.Y` when a `v*` tag is pushed). Pull requests build the image
+without pushing, and the workflow can also be started manually via `workflow_dispatch`.
+
+Pull the published image with:
+
+```powershell
+docker pull ghcr.io/somerandomdolphin/ffws-frontend:latest
+```
+
+The workflow authenticates with the built-in `GITHUB_TOKEN`, so no extra secrets are
+required. If the package visibility has not been set yet, open the package settings on
+GitHub and grant the repository write access.
+
+The image is built only for `linux/amd64`, which runs natively on the GitHub-hosted
+runner. Revisit this if an arm64 deployment target is ever needed.
+
 ## Related Repositories
 
 - [FFWS Frontend](https://github.com/SomeRandomDolphin/ffws-frontend)
