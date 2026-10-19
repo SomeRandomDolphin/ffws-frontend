@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import type { LiveSnapshot } from "@/lib/surabaya";
+import { monitoringApiJson } from "@/lib/api-client";
 
 export function useSurabaya() {
   const [data, setData] = useState<LiveSnapshot | null>(null);
@@ -13,9 +14,7 @@ export function useSurabaya() {
       controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
       try {
-        const response = await fetch("/api/surabaya", { cache: "no-store", signal: controller.signal });
-        if (!response.ok) throw new Error("Layanan data Surabaya belum terhubung.");
-        const snapshot = await response.json() as LiveSnapshot;
+        const snapshot = await monitoringApiJson<LiveSnapshot>("surabaya/snapshot?include_history=false", { cache: "no-store", signal: controller.signal });
         if (!Array.isArray(snapshot.stations)) throw new Error("Format data tidak valid.");
         if (!disposed) { setData(snapshot); setError(null); }
       } catch {

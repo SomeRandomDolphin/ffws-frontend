@@ -4,7 +4,7 @@ import { statusColors } from "@/lib/presentation";
 import type { HydroSources } from "./layers-panel";
 import type { LayerKey, StationStatus } from "@/lib/types";
 
-const statusDescriptions: Record<StationStatus, string> = { Normal: "Muka air di bawah ambang waspada", Meningkat: "Tren muka air naik dalam 3 jam", Waspada: "Mendekati / melewati ambang waspada", Bahaya: "Melewati ambang bahaya" };
+const statusDescriptions: Record<StationStatus, string> = { Normal: "Muka air di bawah ambang waspada", Meningkat: "Tren muka air naik dalam 3 jam", Waspada: "Mendekati / melewati ambang waspada", Bahaya: "Melewati ambang bahaya", "Belum diverifikasi": "Ambang belum dikonfirmasi atau data stasiun belum tersedia" };
 
 export default function LegendPanel({ onClose, activeLayers, sources }: { onClose: () => void; activeLayers: LayerKey[]; sources: HydroSources }) {
   return <aside className="legend-card map-legend-overlay" role="region" aria-label="Legenda peta">

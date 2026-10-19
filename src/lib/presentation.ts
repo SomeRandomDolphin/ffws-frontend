@@ -2,9 +2,11 @@ import type { StationStatus, WaterQualityStatus } from "./types";
 
 export const statusColors: Record<StationStatus, string> = {
   Normal: "#32956b", Meningkat: "#d9ae32", Waspada: "#e48732", Bahaya: "#cb4949",
+  "Belum diverifikasi": "#8b939b",
 };
 export const qualityColors: Record<WaterQualityStatus, string> = {
   Baik: "#28998d", Sedang: "#718093", Buruk: "#765477",
+  "Belum tersedia": "#8b939b",
 };
 export const connectionColors = { live: "#19846d", delayed: "#9a7945" };
 export const chartTheme = {

@@ -1,4 +1,19 @@
 .sensor-picker { display:flex; flex-wrap:wrap; gap:24px; }
+.archive-download { min-height:44px; display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border:1px solid var(--blue); border-radius:var(--radius); color:#fff; background:var(--blue); cursor:pointer; }
+.archive-download:hover:not(:disabled) { border-color:var(--color-action-hover); background:var(--color-action-hover); }
+.archive-download:disabled { opacity:.55; cursor:default; }
+.archive-download-spinner { width:16px; height:16px; flex:0 0 16px; border:2px solid currentColor; border-top-color:transparent; border-radius:50%; animation:archive-download-spin 700ms linear infinite; }
+@keyframes archive-download-spin { to { transform:rotate(360deg); } }
+@media(prefers-reduced-motion:reduce) { .archive-download-spinner { animation:none; } }
+.archive-sensor { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:20px 0; }
+.archive-sensor select { max-width:100%; min-height:44px; padding:8px 12px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); color:var(--navy); }
+.archive-preview { padding:0 16px 24px; }
+.archive-preview .monitor-heading h1 { font-size:var(--text-panel); }
+.archive-preview .history-controls { align-items:flex-start; flex-wrap:wrap; gap:12px; }
+.archive-preview .observation-grid { grid-template-columns:1fr 1fr; gap:16px; }
+.archive-preview .monitor-section-heading { align-items:flex-start; flex-direction:column; }
+.archive-preview .monitor-updated { text-align:left; }
+.archive-preview .monitor-chart { height:280px; }
 .sensor-select-section + .monitor-section { border-top:0; }
 .sensor-picker-note { max-width:300px; margin:0; color:var(--muted); font-size:var(--text-caption); }
 .sensor-option { min-height:44px; padding:6px 0 12px; border:0; border-bottom:2px solid transparent; background:transparent; color:var(--muted); font-size:var(--text-label); font-weight:500; cursor:pointer; }
@@ -50,13 +65,25 @@
 .chart-caption span { color:var(--muted); font-size:var(--text-caption); }
 .monitor-chart { height:410px; margin:20px 0 0; }
 .monitor-tooltip { display:flex; flex-direction:column; gap:4px; padding:12px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); color:var(--navy); box-shadow:var(--shadow); font-size:var(--text-caption); }
-.inline-data { margin-top:8px; border-top:1px solid var(--line); }
+.inline-data { margin-top:8px; }
 .monitor-table-wrap { overflow-x:auto; }
+.history-data { margin-top:24px; padding-top:12px; }
+.history-data summary { min-height:44px; padding:10px 0; color:var(--blue); cursor:pointer; font-size:var(--text-label); }
+.history-data .monitor-table-wrap { margin-top:12px; }
+.history-data .monitor-table { table-layout:fixed; }
+.history-data .monitor-table th,.history-data .monitor-table td { padding:14px 24px; }
+.history-data .monitor-table th:first-child,.history-data .monitor-table td:first-child { width:190px; }
+.history-data .monitor-table th:not(:first-child),.history-data .monitor-table td:not(:first-child) { width:130px; }
+.history-data .monitor-table th.water-level-column,.history-data .monitor-table td.water-level-column { width:190px; }
+.history-data .monitor-table th.water-level-column { color:var(--blue); font-weight:700; }
 .monitor-table { width:100%; min-width:620px; border-collapse:collapse; color:var(--navy); font-size:var(--text-label); }
 .monitor-table caption { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 .monitor-table th { padding:12px; border-block:1px solid var(--line); background:var(--paper); color:var(--muted); text-align:left; font-size:var(--text-label); font-weight:500; }
 .monitor-table td { padding:12px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; }
 .monitor-table td:nth-child(2),.monitor-table th:nth-child(2),.inline-data .monitor-table td:nth-child(3),.inline-data .monitor-table th:nth-child(3) { text-align:right; }
+.sensor-description-table th,.sensor-description-table td { text-align:left!important; }
+.sensor-description-table th:first-child { width:28%; }
+.sensor-description-table th:last-child { width:72%; }
 .threshold-table td:nth-child(2),.threshold-table th:nth-child(2) { text-align:left; }
 .monitor-table tbody tr:hover { background:var(--color-surface-hover); }
 .monitor-table small { display:block; margin-top:4px; color:var(--muted); font-size:var(--text-caption); }
@@ -67,6 +94,8 @@
 .station-metadata div { display:grid; grid-template-columns:145px 1fr; gap:16px; padding:12px 0; border-bottom:1px solid var(--line); }
 .station-metadata dt { color:var(--muted); font-size:var(--text-label); }
 .station-metadata dd { margin:0; color:var(--navy); font-size:var(--text-label); overflow-wrap:anywhere; }
+.station-metadata .station-source { display:block; padding:0 0 8px; border:0; }
+.station-source small { display:block; margin-top:4px; color:var(--muted); }
 .location-figure { margin:0; min-width:0; }
 .location-figure figcaption { padding-top:8px; color:var(--muted); font-size:var(--text-caption); }
 .monitor-map { position:relative; height:350px; border:1px solid var(--line); border-radius:var(--panel-radius); background:var(--paper); }

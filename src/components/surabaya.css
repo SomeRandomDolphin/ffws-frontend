@@ -18,6 +18,10 @@
 .live-tank-tube { position:relative; width:56px; height:112px; border:2px solid #cbd5e1; border-radius:28px; background:#f8fafc; overflow:hidden; }
 .live-tank-water { position:absolute; bottom:0; left:0; right:0; background:#0284c7; transition:height 0.4s cubic-bezier(0.4, 0, 0.2, 1); border-radius:0 0 30px 30px; }
 .live-tank-wave { display:none; }
+.live-tank-tube.is-unscaled { display:grid; place-items:center; background:repeating-linear-gradient(-45deg,var(--surface),var(--surface) 6px,var(--paper) 6px,var(--paper) 12px); }
+.live-tank-placeholder { color:var(--muted); font-size:24px; }
+.live-preview-detail { display:flex; align-items:center; justify-content:center; min-height:44px; margin-top:20px; border:1px solid var(--line); border-radius:var(--radius); color:var(--blue); text-decoration:none; }
+.live-preview-detail:hover { background:var(--color-surface-hover); }
 .live-tank-label { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
 .live-reading-block { display:flex; flex-direction:column; gap:4px; }
 .live-water-headline { display:flex; align-items:baseline; gap:8px; }

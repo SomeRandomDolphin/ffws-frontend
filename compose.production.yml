@@ -1,53 +1,121 @@
 name: ffws
 
+x-monitoring: &monitoring
+  build:
+    context: ../backend/services/monitoring-api
+    dockerfile: Dockerfile.monitoring
+    args:
+      INSTALL_PREDICTIONS: ${PREDICTIONS_ENABLED:-false}
+  image: ffws-monitoring
+  restart: unless-stopped
+  environment: &monitoring-environment
+    ARCHIVE_DATABASE_URL: mysql+pymysql://archive:${ARCHIVE_PASSWORD:?Run scripts/initialize-stack.ps1 first}@archive-db:3306/ffws_monitoring
+    PREDICTIONS_ENABLED: "${PREDICTIONS_ENABLED:-false}"
+    TELEGRAM_ENABLED: "${TELEGRAM_ENABLED:-false}"
+    WELANG_API_URL: ${WELANG_API_URL:-}
+    WELANG_API_TOKEN: ${WELANG_API_TOKEN:-}
+    WELANG_IMPORT_PATH: ${WELANG_IMPORT_PATH:-/app/imports/history}
+  volumes:
+    - exports:/app/exports
+    - type: bind
+      source: ../backend/services/monitoring-api/imports/history
+      target: /app/imports/history
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../backend/services/monitoring-api/configs/surabaya/database.local.yaml
+      target: /app/configs/surabaya/database.local.yaml
+      read_only: true
+      bind:
+        create_host_path: false
+
 services:
-  backend:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
+  archive-db:
+    image: mysql:8.4
     restart: unless-stopped
     environment:
-      PREDICTOR_BACKEND: file
+      MYSQL_DATABASE: ffws_monitoring
+      MYSQL_USER: archive
+      MYSQL_PASSWORD: ${ARCHIVE_PASSWORD:?Archive password required}
+      MYSQL_ROOT_PASSWORD: ${ARCHIVE_ROOT_PASSWORD:?Archive root password required}
     volumes:
-      - backend_artifacts:/app/artifacts
-      - ../backend/configs/surabaya/database.local.yaml:/app/configs/surabaya/database.local.yaml:ro
-    expose:
-      - "8000"
+      - archive_mysql:/var/lib/mysql
     healthcheck:
-      test:
-        - CMD
-        - python
-        - -c
-        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/surabaya/snapshot', timeout=5)"
+      test: ["CMD-SHELL", 'MYSQL_PWD="$$MYSQL_PASSWORD" mysql -uarchive -e "SELECT 1" ffws_monitoring']
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  archive-init:
+    <<: *monitoring
+    restart: "no"
+    command: ["python", "-m", "monitoring.worker", "init"]
+    depends_on:
+      archive-db:
+        condition: service_healthy
+
+  backend:
+    <<: *monitoring
+    depends_on:
+      archive-init:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:${MONITORING_API_PORT:-8001}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=5)"]
       interval: 30s
       timeout: 8s
       retries: 3
-      start_period: 30s
+      start_period: 15s
+
+  worker:
+    <<: *monitoring
+    command: ["python", "-m", "monitoring.worker", "run"]
+    depends_on:
+      archive-init:
+        condition: service_completed_successfully
+    stop_grace_period: 45s
+
+  laravel:
+    build:
+      context: ../backend
+      dockerfile: infra/laravel/Dockerfile
+    image: ffws-laravel
+    restart: unless-stopped
+    env_file:
+      - ${LARAVEL_ENV_FILE:-../backend/.env}
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      PREDICTIONS_ENABLED: "${PREDICTIONS_ENABLED:-false}"
+      TELEGRAM_ENABLED: "${TELEGRAM_ENABLED:-false}"
+    volumes:
+      - laravel_storage:/var/www/html/storage
+    ports:
+      - "127.0.0.1:${LARAVEL_PORT:-8080}:80"
 
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_MONITORING_API_URL: ${NEXT_PUBLIC_MONITORING_API_URL:-/monitoring-api}
     restart: unless-stopped
-    environment:
-      NODE_ENV: production
-      HOSTNAME: 0.0.0.0
-      SURABAYA_API_URL: http://backend:8000
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_started
     ports:
-      - "${FFWS_PORT:-3000}:3000"
+      - "${FFWS_BIND_ADDRESS:-127.0.0.1}:${FFWS_PORT:-3000}:80"
     healthcheck:
-      test:
-        - CMD
-        - node
-        - -e
-        - "fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
       interval: 30s
-      timeout: 8s
+      timeout: 25s
       retries: 3
       start_period: 20s
 
 volumes:
-  backend_artifacts:
+  archive_mysql:
+  exports:
+  laravel_storage:

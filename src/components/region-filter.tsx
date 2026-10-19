@@ -30,13 +30,14 @@ export default function RegionFilter({ value, onChange, onOpen }: { value: Regio
       if (open) close();
       else { onOpen(); setOpen(true); }
     }}><Icon name="filter" /></button>
-    {open && <div id="region-filter-options" className="region-filter-options" role="group" aria-label="Cakupan pencarian">
+    {open && <div id="region-filter-options" className="region-filter-options" role="group" aria-label="Cakupan peta">
+      <div className="region-filter-heading"><strong>Filter wilayah</strong><span>Pilih cakupan peta</span></div>
       {regionOrder.map(key => <button key={key} type="button" aria-pressed={value === key} className={value === key ? "is-selected" : ""} onClick={() => {
         onChange(key);
         close();
       }}>
         <span>{regionPresets[key].label}</span>
-        <span aria-hidden="true">{value === key ? "✓" : ""}</span>
+        <span className="region-filter-radio" aria-hidden="true" />
       </button>)}
     </div>}
   </div>;
