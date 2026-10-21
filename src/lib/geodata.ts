@@ -1,4 +1,5 @@
 import { emptyGeoJSON } from "./basin-focus";
+import { withBasePath } from "./base-path";
 import type { FeatureCollection } from "geojson";
 
 export type GeoAssets = {
@@ -46,7 +47,7 @@ const coordinatesValid = (value: unknown): boolean => {
 
 async function loadAsset(spec: AssetSpec): Promise<{ data: FeatureCollection; local: boolean }> {
   try {
-    const response = await fetch(spec.path);
+    const response = await fetch(withBasePath(spec.path));
     if (!response.ok) throw new Error("Missing GeoJSON");
     const data = (await response.json()) as FeatureCollection & { features?: Array<{ geometry?: { type: string; coordinates: unknown } }> };
     if (data.type !== "FeatureCollection" || !Array.isArray(data.features) || !data.features.length) throw new Error("Invalid collection");
