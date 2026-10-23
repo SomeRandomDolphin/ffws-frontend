@@ -15,6 +15,7 @@ import Icon from "./icon";
 import { configureMapWorker } from "@/lib/map-worker";
 import { qualityColors, connectionColors } from "@/lib/presentation";
 import { liveStateLabel, liveTime, type LiveStation } from "@/lib/surabaya";
+import { withBasePath } from "@/lib/base-path";
 
 type Props = {
   liveStations: LiveStation[]; liveDisconnected: boolean;
@@ -110,7 +111,7 @@ export default function MapView(props: Props) {
           latest.current.onOpenChart(markers.current.get(station.name)?.getElement());
         };
         const detail = document.createElement("a");
-        detail.href = "/station/" + encodeURIComponent(name);
+        detail.href = withBasePath("/station/" + encodeURIComponent(name));
         detail.innerHTML = '<svg class="popup-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Detail stasiun</span>';
         const alertAction = document.createElement("button");
         alertAction.className = "popup-alert-action";
@@ -140,7 +141,7 @@ export default function MapView(props: Props) {
       addText("small", `Waktu data · ${liveTime(station.observedAt)}`, "popup-time");
       if (menu) {
         const actions = document.createElement("div"); actions.className = "popup-actions";
-        const stationUrl = "/station/" + encodeURIComponent(station.name);
+        const stationUrl = withBasePath("/station/" + encodeURIComponent(station.name));
         const previewBtn = document.createElement("button");
         previewBtn.type = "button";
         previewBtn.className = "popup-preview-btn";
