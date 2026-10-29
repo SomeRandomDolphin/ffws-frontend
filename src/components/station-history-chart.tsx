@@ -24,7 +24,6 @@ export default function StationHistoryChart({ points, unit, loading, error, titl
 
   return <>
     <div className="preview-history-heading"><h3>{title}</h3><div className="preview-history-ranges" role="group" aria-label="Rentang riwayat">{[{value:30,label:"30 menit"},{value:360,label:"6 jam"},{value:1440,label:"24 jam"}].map(item=><button key={item.value} type="button" aria-pressed={minutes===item.value} onClick={()=>setMinutes(item.value)}>{item.label}</button>)}</div></div>
-    {!!history.length && <p className="live-note">{timeFormat.format(window.start)} – {timeFormat.format(window.end)} WIB</p>}
     {error && <p className="live-note" role="status">{error}</p>}
     {history.length ? <div className="live-chart">
       <ResponsiveContainer width="100%" height="100%">
@@ -32,11 +31,12 @@ export default function StationHistoryChart({ points, unit, loading, error, titl
           <CartesianGrid stroke={chartTheme.grid} vertical={false} />
           <XAxis dataKey="time" type="number" domain={[window.start, window.end]} tickFormatter={value => clockFormat.format(value)} minTickGap={45} tick={chartTheme.tick} />
           <YAxis domain={["auto", "auto"]} tick={chartTheme.tick} width={50} tickFormatter={value => Number(value).toFixed(2)} />
-          <Tooltip contentStyle={chartTheme.tooltip} labelFormatter={value => `${timeFormat.format(Number(value))} WIB`} formatter={(value,key) => [Array.isArray(value) ? `${Number(value[0]).toFixed(2)}–${Number(value[1]).toFixed(2)} ${unit}` : value == null ? "—" : `${Number(value).toFixed(2)} ${unit}`, key === "Minimum–maksimum" ? "Minimum–maksimum" : window.interval ? "Rata-rata" : "Muka air"]} />
-          {window.interval > 0 && <Area dataKey="range" name="Minimum–maksimum" fill={chartTheme.rainFill} fillOpacity={0.6} stroke="none" connectNulls={false} isAnimationActive={false} />}
+          <Tooltip contentStyle={chartTheme.tooltip} labelFormatter={value => `${timeFormat.format(Number(value))} WIB`} formatter={(value,key) => [Array.isArray(value) ? `${Number(value[0]).toFixed(2)}–${Number(value[1]).toFixed(2)} ${unit}` : value == null ? "—" : `${Number(value).toFixed(2)} ${unit}`, key === "Min–maks" ? "Min–maks" : window.interval ? "Rata-rata" : "Muka air"]} />
+          {window.interval > 0 && <Area dataKey="range" name="Min–maks" fill={chartTheme.rainFill} fillOpacity={0.6} stroke="none" connectNulls={false} isAnimationActive={false} />}
           <Line dataKey="value" name="Muka air" stroke={chartTheme.water} strokeWidth={2.5} dot={false} connectNulls={false} isAnimationActive={false} />
         </ComposedChart>
       </ResponsiveContainer>
     </div> : <p role="status">{loading ? "Memuat riwayat…" : "Riwayat belum tersedia."}</p>}
+    {!!history.length && <div className="preview-history-caption"><p>{timeFormat.format(window.start)} – {timeFormat.format(window.end)} WIB</p>{window.interval > 0 && <p>Interval rata-rata: {window.interval / 60000} menit</p>}</div>}
   </>;
 }

@@ -23,14 +23,15 @@ export default function LegendPanel({ onClose, activeLayers, sources }: { onClos
       <span className="legend-heading">Curah hujan 30 menit</span>
       <div className="legend-rain-scale"><span><i className="rain-small" /><b>Ringan</b></span><span><i className="rain-medium" /><b>Sedang</b></span><span><i className="rain-large" /><b>Lebat</b></span></div>
     </section>}
-    <section className="legend-group"><span className="legend-heading">Sungai &amp; batas wilayah</span>
-      {((activeLayers.includes("topology") && sources.topology) || (activeLayers.includes("surabayaRivers") && sources.surabayaRivers)) && <WaterwayKey />}
+    <section className="legend-group legend-hydro"><span className="legend-heading">Sungai &amp; batas wilayah</span>
+      {((activeLayers.includes("topology") && sources.topology) || (activeLayers.includes("surabayaRivers") && sources.surabayaRivers) || (activeLayers.includes("regionalRivers") && sources.eastRivers)) && <WaterwayKey />}
       {activeLayers.includes("subdas") && sources.subdas && <div className="legend-row"><i className="legend-subbasin" /><div><b>Sub-DAS stasiun</b><small>Partisi area aliran dari DEMNAS ~30 m</small></div></div>}
       {activeLayers.includes("basin") && sources.basin && <div className="legend-row"><i className="legend-basin" /><div><b>Batas DAS Welang</b><small>BIG · Atlas Wilayah Sungai · WELANG (11622)</small></div></div>}
-      {activeLayers.includes("admin") && sources.admin && <div className="legend-row"><i className="legend-admin" /><div><b>Kabupaten/kota Jawa Timur</b><small>BIG · Batas Wilayah Administrasi</small></div></div>}
       {activeLayers.includes("regionalRivers") && sources.eastRivers && <div className="legend-row"><i className="legend-regional-river" /><div><b>Sungai besar Jawa Timur</b></div></div>}
+      {activeLayers.includes("admin") && sources.admin && <div className="legend-row"><i className="legend-admin" /><div><b>Kabupaten/kota Jawa Timur</b></div></div>}
       {!activeLayers.some(key => ["basin", "topology", "surabayaRivers", "subdas", "admin", "regionalRivers"].includes(key)) && <small>Tidak ada overlay geospasial aktif.</small>}
     </section>
     {((activeLayers.includes("topology") && sources.topology) || (activeLayers.includes("surabayaRivers") && sources.surabayaRivers) || (activeLayers.includes("regionalRivers") && sources.eastRivers)) && <p className="legend-note">Sumber data sungai: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a> · <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noreferrer">ODbL</a></p>}
+    {activeLayers.includes("admin") && sources.admin && <p className="legend-note legend-boundary-source">Sumber batas wilayah: Badan Informasi Geospasial (BIG)</p>}
   </aside>;
 }

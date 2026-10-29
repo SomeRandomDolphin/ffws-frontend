@@ -5,7 +5,7 @@ test('raw 30-minute window preserves spikes and zeros',()=>{
  const r=previewHistory([{time:0,value:9},{time:1800001,value:0},{time:1800002,value:100}],30);
  assert.deepEqual(r.points.map(p=>p.value),[0,100]);
 });
-test('summary retains extrema and separates nulls',()=>{
+test('six-hour window averages five minutes and preserves extrema and nulls',()=>{
  const r=previewHistory([{time:0,value:0},{time:1000,value:100},{time:2000,value:null},{time:3000,value:20}],360);
  assert.equal(r.interval,300000);
  assert.deepEqual(r.points.map(p=>p.value),[50,null,20]);

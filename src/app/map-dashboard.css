@@ -132,7 +132,7 @@
 .popup-source-badge { padding:4px 8px; border-radius:var(--radius-badge); font-size:var(--text-caption); font-weight:600; }
 .popup-source-badge.is-simulation { background:var(--color-selection-bg); color:var(--blue); }
 .popup-source-badge.is-live { background:var(--color-normal-bg); color:var(--color-normal); }
-.popup-source-badge.is-delayed { background:var(--color-warning-bg); color:var(--color-warning); }
+.popup-source-badge.is-delayed { background:#f1f5f9; color:#64748b; }
 .popup-station-name { min-height:30px; padding-right:38px; color:var(--navy); font:600 var(--text-subtitle)/1.25 var(--font-sans); overflow-wrap:anywhere; }
 .popup-kicker { font-size:var(--text-caption); color:var(--muted); }
 .popup-reading { font:500 28px/1.2 var(--font-mono); color:var(--navy); font-variant-numeric:tabular-nums; }

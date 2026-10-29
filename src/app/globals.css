@@ -54,7 +54,7 @@ h1,h2,h3 { overflow-wrap:anywhere; }
 .wm-logo svg { width:32px; height:32px; }
 .wm-brand-copy strong { display:block; font:600 var(--text-panel)/1.25 var(--font-sans); }
 .wm-header .detail-header-context { color:rgb(255 255 255 / 82%); }
-.wm-clock { margin-left:auto; display:flex; gap:8px; align-items:center; font-size:var(--text-caption); font-variant-numeric:tabular-nums; color:rgb(255 255 255 / 82%); }
+.wm-clock { margin-left:auto; display:flex; gap:8px; align-items:center; font-size:16px; font-weight:500; line-height:1.5; font-variant-numeric:tabular-nums; color:#fff; white-space:nowrap; }
 .site-footer { display:flex; flex-shrink:0; align-items:center; justify-content:space-between; gap:16px; padding:8px 24px; background:var(--surface); border-top:1px solid var(--line); color:var(--muted); }
 .site-footer-brand { display:flex; align-items:center; gap:12px; }
 .site-footer-brand div { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px; }

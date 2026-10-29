@@ -24,6 +24,7 @@ export default function LiveStationPanel({ station, disconnected = false }: { st
 
   return <StationPreview
     ariaLabel={`Data live ${station.name}`}
+    zeroDistance={sensorDistanceCm === 0}
     notices={station.error && <p role="status" className="live-warning">{station.error}</p>}
     controls={station.sensors.length > 1 && <div className="live-sensor-tabs" role="group" aria-label="Pilih kanal sensor">
       {station.sensors.map(item => <button key={item.id} type="button" className="live-sensor-tab" aria-pressed={sensor?.id === item.id} onClick={() => setSelected(item.id)}>{formatSensorLabel(item.id, station.name)}</button>)}

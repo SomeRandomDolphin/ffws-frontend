@@ -81,6 +81,8 @@ export default function MapView(props: Props) {
       if (!station) return;
       popup.current?.remove();
       popupStation.current = { kind: "welang", name, menu };
+      const activeMarker = markers.current.get(name)?.getElement();
+      activeMarker?.classList.add("has-open-popup");
       const content = document.createElement("div");
       content.className = `station-popover${station.status === "Bahaya" ? " is-danger" : ""}`;
       const addText = (tag: string, text: string, className = "") => {
@@ -90,8 +92,8 @@ export default function MapView(props: Props) {
       if(basinData.current.features.length && !insideBasin([station.longitude,station.latitude],basinData.current)) addText("small","Di luar batas DAS sumber BIG","popup-time");
       addText("strong", station.name, "popup-station-name");
       addText("small", "Stasiun pemantauan · DAS Welang", "popup-kicker");
+      addText("small", station.observedAt ? liveTime(station.observedAt) : "—", "popup-time");
       addText("span", Number.isFinite(station.valueM) ? station.valueM.toFixed(2) + " m" : "Data belum tersedia", "popup-reading");
-      addText("small", `Waktu data · ${station.observedAt ? liveTime(station.observedAt) : "—"}`, "popup-time");
       addText("small", station.sourceLabel ?? "Data belum tersedia", "popup-trend");
       if (station.status === "Bahaya") {
         const alert = document.createElement("div");
@@ -121,7 +123,7 @@ export default function MapView(props: Props) {
       }
       const next = new Popup({ closeButton: true, closeOnClick: true, focusAfterOpen: false, offset: 18, maxWidth: "340px", className: "station-popup" })
         .setLngLat([station.longitude, station.latitude]).setDOMContent(content).addTo(map);
-      next.on("close", () => { if (popup.current === next) popupStation.current = null; });
+      next.on("close", () => { activeMarker?.classList.remove("has-open-popup"); if (popup.current === next) popupStation.current = null; });
       popup.current = next;
     };
     showLivePopup.current = (id, menu) => {
@@ -129,6 +131,8 @@ export default function MapView(props: Props) {
       if (!station || station.latitude === null || station.longitude === null) return;
       popup.current?.remove();
       popupStation.current = { kind: "surabaya", name: id, menu };
+      const activeMarker = liveMarkers.current.get(id)?.getElement();
+      activeMarker?.classList.add("has-open-popup");
       const content = document.createElement("div");
       content.className = "station-popover";
       const addText = (tag: string, text: string, className = "") => {
@@ -136,9 +140,26 @@ export default function MapView(props: Props) {
       };
       addText("strong", station.name, "popup-station-name");
       const primary = station.sensors.find(sensor => sensor.valueCm !== null);
-      addText("small", "Tinggi muka air", "popup-kicker");
-      addText("span", primary?.waterLevelCm == null ? "—" : `${(primary.waterLevelCm / 100).toFixed(2)} m`, "popup-reading");
-      addText("small", `Waktu data · ${liveTime(station.observedAt)}`, "popup-time");
+      const readingHeading = document.createElement("div");
+      readingHeading.className = "popup-reading-heading";
+      const readingLabel = document.createElement("small");
+      readingLabel.className = "popup-kicker";
+      readingLabel.textContent = "Tinggi muka air";
+      const readingTime = document.createElement("small");
+      readingTime.className = "popup-time";
+      readingTime.textContent = liveTime(station.observedAt);
+      readingHeading.append(readingLabel, readingTime);
+      content.append(readingHeading);
+      const reading = document.createElement("span");
+      reading.className = "popup-reading";
+      reading.append(primary?.waterLevelCm == null ? "—" : (primary.waterLevelCm / 100).toFixed(2));
+      if (primary?.waterLevelCm != null) {
+        const unit = document.createElement("small");
+        unit.className = "popup-reading-unit";
+        unit.textContent = "m";
+        reading.append(unit);
+      }
+      content.append(reading);
       if (menu) {
         const actions = document.createElement("div"); actions.className = "popup-actions";
         const stationUrl = "/station/" + encodeURIComponent(station.name);
@@ -160,7 +181,7 @@ export default function MapView(props: Props) {
       }
       const next = new Popup({ closeButton: true, closeOnClick: true, focusAfterOpen: false, offset: 18, maxWidth: "340px", className: "station-popup" })
         .setLngLat([station.longitude, station.latitude]).setDOMContent(content).addTo(map);
-      next.on("close", () => { if (popup.current === next) popupStation.current = null; });
+      next.on("close", () => { activeMarker?.classList.remove("has-open-popup"); if (popup.current === next) popupStation.current = null; });
       popup.current = next;
     };
     // DOM markers are independent of tile, glyph, and optional GeoJSON loading.
