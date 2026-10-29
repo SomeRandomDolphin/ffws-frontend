@@ -1,6 +1,12 @@
 import type { FeatureCollection, Polygon, MultiPolygon, Position } from "geojson";
 
 export const emptyGeoJSON: FeatureCollection = {type:"FeatureCollection",features:[]};
+export function outsideMask(data: FeatureCollection): FeatureCollection {
+  const polygons = basinPolygons(data);
+  if (!polygons.length) return emptyGeoJSON;
+  const world: Position[] = [[-180,-85],[180,-85],[180,85],[-180,85],[-180,-85]];
+  return {type:"FeatureCollection",features:[{type:"Feature",properties:{},geometry:{type:"MultiPolygon",coordinates:[[world,...polygons.map(p=>p[0])],...polygons.flatMap(p=>p.slice(1).map(hole=>[hole]))]}}]};
+}
 export function basinPolygons(data: FeatureCollection): Position[][][] {
   return data.features.flatMap(feature => feature.geometry.type === "Polygon" ? [(feature.geometry as Polygon).coordinates] : feature.geometry.type === "MultiPolygon" ? (feature.geometry as MultiPolygon).coordinates : []);
 }

@@ -8,7 +8,7 @@ import { regionPresets } from "@/lib/camera";
 import type { BasemapState } from "@/lib/basemap";
 import { createBasemapController, type BasemapId, type BasemapFeedback } from "@/lib/basemap-catalog";
 import type { OverlayOpacity, HydroSources } from "./layers-panel";
-import { emptyGeoJSON, insideBasin } from "@/lib/basin-focus";
+import { emptyGeoJSON, insideBasin, outsideMask } from "@/lib/basin-focus";
 import type { FeatureCollection } from "geojson";
 import type { GeoJSONSource } from "maplibre-gl";
 import Icon from "./icon";
@@ -254,6 +254,12 @@ export default function MapView(props: Props) {
       map.addSource("surabaya-rivers", { type: "geojson", data: emptyGeoJSON });
       for (const [id, kind, width, dash] of [["surabaya-river-lines", "river", 2.8, undefined], ["surabaya-canal-lines", "canal", 1.6, [2, 2]], ["surabaya-stream-lines", "stream", 1.15, [1, 2]]] as const) map.addLayer({ id, type: "line", source: "surabaya-rivers", minzoom: 8.5, filter: ["==", ["get", "waterway"], kind], layout: { visibility: latest.current.activeLayers.includes("surabayaRivers") && latest.current.region === "surabaya" ? "visible" : "none", "line-cap": "round", "line-join": "round" }, paint: { "line-color": kind === "river" ? "#247eb5" : kind === "canal" ? "#6ea8c5" : "#4a98c5", "line-width": width, ...(dash ? { "line-dasharray": [...dash] } : {}), "line-opacity": latest.current.opacity.surabayaRivers } });
     });
+    map.once("style.load", () => {
+      map.addSource("surabaya-focus-mask", {type:"geojson",data:emptyGeoJSON});
+      map.addSource("surabaya-focus-boundary", {type:"geojson",data:emptyGeoJSON});
+      map.addLayer({id:"surabaya-focus-dim",type:"fill",source:"surabaya-focus-mask",paint:{"fill-color":"#172b3a","fill-opacity":latest.current.region === "surabaya" ? .38 : 0,"fill-opacity-transition":{duration:350}}});
+      map.addLayer({id:"surabaya-focus-outline",type:"line",source:"surabaya-focus-boundary",paint:{"line-color":"#246b91","line-width":1.5,"line-opacity":latest.current.region === "surabaya" ? .8 : 0,"line-opacity-transition":{duration:350}}});
+    });
     loadGeoAssets().then(data => {
       if(disposed) return;
       const apply = () => {
@@ -265,6 +271,9 @@ export default function MapView(props: Props) {
         (map.getSource("subdas") as GeoJSONSource | undefined)?.setData(data.assets.subdas);
         (map.getSource("basin") as GeoJSONSource | undefined)?.setData(data.assets.basin);
         geoData.current = data.assets;
+        const boundary: FeatureCollection = {type:"FeatureCollection",features:data.assets.regencies.features.filter(feature => feature.properties?.KDPKAB === "35.78")};
+        (map.getSource("surabaya-focus-mask") as GeoJSONSource | undefined)?.setData(outsideMask(boundary));
+        (map.getSource("surabaya-focus-boundary") as GeoJSONSource | undefined)?.setData(boundary);
         basinData.current = data.assets.basin;
         latest.current.onHydroSources(data.sources);
         if(frameAll.current) fitAll.current();
@@ -349,6 +358,11 @@ export default function MapView(props: Props) {
       if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", props.activeLayers.includes(key) && inRegion ? "visible" : "none");
     }
   }, [props.activeLayers, props.region, ready]);
+  useEffect(() => {
+    const map = mapRef.current;
+    if(map?.getLayer("surabaya-focus-dim")) map.setPaintProperty("surabaya-focus-dim","fill-opacity",props.region === "surabaya" ? .38 : 0);
+    if(map?.getLayer("surabaya-focus-outline")) map.setPaintProperty("surabaya-focus-outline","line-opacity",props.region === "surabaya" ? .8 : 0);
+  }, [props.region,ready]);
   useEffect(() => { basemapController.current?.select(props.basemapRequest.id); }, [props.basemapRequest]);
   useEffect(() => {
     const map = mapRef.current;
