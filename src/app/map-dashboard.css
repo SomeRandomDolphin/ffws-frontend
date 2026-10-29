@@ -97,19 +97,19 @@
 .station-results > button:hover,.station-results > button:focus-visible { background:var(--color-selection-bg); }
 .station-results button i { width:10px; height:10px; border:1px solid var(--navy); border-radius:50%; flex-shrink:0; }
 .station-results button small { margin-left:auto; color:var(--muted); font-size:var(--text-caption); }
-.station-pin { width:44px; height:44px; padding:0; display:grid; place-items:center; border:0; background:transparent; cursor:pointer; z-index:1; }
+.station-pin { width:44px; height:44px; padding:0; display:grid; place-items:center; border:0; background:transparent; cursor:pointer; z-index:1; opacity:var(--station-opacity, 0); visibility:var(--station-visibility, hidden); transition:opacity 180ms var(--ease); }
 .station-rainfall { display:none; position:absolute; width:var(--rain-size,24px); height:var(--rain-size,24px); border:1px solid var(--color-rain); border-radius:50%; background:#259ed438; }
 .station-quality { display:none; position:absolute; width:25px; height:25px; border:3px solid var(--quality-color); border-radius:50%; background:#ffffff75; }
 .station-pin.has-rainfall .station-rainfall,.station-pin.has-quality .station-quality { display:block; }
-.station-pin-dot { width:16px; height:16px; border:2px solid var(--navy); outline:2px solid white; border-radius:50%; background:var(--station-color); transition:box-shadow 160ms var(--ease); }
+.station-pin-dot { width:var(--station-dot-size, 8px); height:var(--station-dot-size, 8px); border:2px solid var(--navy); outline:2px solid white; border-radius:50%; background:var(--station-color); transition:box-shadow 160ms var(--ease); }
 .station-pin-label { display:none; position:absolute; padding:4px 8px; white-space:nowrap; border-radius:var(--radius-badge); border:1px solid var(--line); background:var(--surface); color:var(--navy); font:500 var(--text-caption)/1.5 var(--font-sans); pointer-events:none; }
-.station-pin.has-label .station-pin-label { display:block; }
+.station-pin.has-label .station-pin-label { display:block; opacity:0; transition:opacity 180ms var(--ease); }
 .station-pin-label[data-position="right"] { left:35px; top:50%; transform:translateY(-50%); }
 .station-pin-label[data-position="left"] { right:35px; top:50%; transform:translateY(-50%); }
 .station-pin-label[data-position="top"] { bottom:35px; left:50%; transform:translateX(-50%); }
 .station-pin-label[data-position="bottom"] { top:35px; left:50%; transform:translateX(-50%); }
 .station-pin.is-selected { z-index:2; }
-.station-pin.is-selected .station-pin-dot { width:19px; height:19px; box-shadow:0 0 0 6px #246b9133; }
+.station-pin.is-selected .station-pin-dot { width:var(--station-selected-size, 11px); height:var(--station-selected-size, 11px); box-shadow:0 0 0 6px #246b9133; }
 .station-pin.is-selected .station-pin-label { background:var(--navy); border-color:var(--navy); color:white; }
 .station-pin:hover,.station-pin:focus-visible { z-index:3; }
 .station-pin:hover .station-pin-dot,.station-pin:focus-visible .station-pin-dot { box-shadow:0 0 0 6px #246b914d; }

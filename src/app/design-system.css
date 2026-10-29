@@ -1,0 +1,23 @@
+:root { --radius:6px; --panel-radius:8px; --control-height:44px; --color-reading:#101820; --color-reading-text:#f5f8fa; --color-reading-muted:#b9c8d2; --text-reading:2.25rem; }
+.ds-button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:10px 16px; border:1px solid transparent; border-radius:6px; font-weight:500; text-decoration:none; }
+.ds-button-primary { background:var(--color-action); color:white; }
+.ds-button-primary:hover { background:var(--color-action-hover); }
+.ds-button-outline { background:white; color:var(--color-text); border-color:var(--color-control-border); }
+.ds-button-ghost { background:transparent; color:var(--color-text); }
+.ds-button-destructive { background:var(--color-danger); color:white; }
+.ds-button-icon { width:44px; padding:10px; }
+.ds-button:disabled { opacity:.55; cursor:not-allowed; }
+.monitor .reading-panel,.live-gauge-container { background:var(--color-reading); color:var(--color-reading-text); border:1px solid #2b3945; border-radius:8px; padding:24px; }
+.monitor .reading-panel h2,.monitor .reading-panel dd,.monitor .reading-panel .observation-primary dd,.live-gauge-container .live-water-value { color:var(--color-reading-text); }
+.monitor .reading-panel dt,.monitor .reading-panel span,.monitor .reading-panel small,.monitor .reading-panel .reading-reference,.live-gauge-container .live-meter-sub,.live-gauge-container dt { color:var(--color-reading-muted); }
+.monitor .reading-panel .reading-level-track { background:#2b3945; }
+.monitor .reading-panel .reading-level-track > div { background:#66b3dc; }
+.monitor .reading-panel .reading-reference dd { color:var(--color-reading-text); }
+.monitor-table th { background:var(--color-bg); font-weight:600; }
+.monitor-table th,.monitor-table td { padding:14px 16px; }
+.monitor-table td:not(:first-child),.monitor-table th:not(:first-child) { font-variant-numeric:tabular-nums; }
+.map-legend-overlay,.live-drawer { border-radius:8px; }
+.panel-close,.overlay-close,.live-close { min-width:44px; min-height:44px; border-radius:6px; }
+.monitor-body { padding-top:24px; }
+.monitor-section { padding-top:24px; padding-bottom:24px; }
+@media(max-width:700px) { .monitor .reading-panel,.live-gauge-container { padding:16px; } .wm-dashboard { min-height:0; } }

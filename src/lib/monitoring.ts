@@ -8,6 +8,7 @@ export type ArchiveSeries = {
   points: { time: string; value: number | null; source: string; waterLevelCm?: number | null; capacityPercent?: number | null }[];
 };
 export type ArchiveStation = {
+  sensors?: ArchiveSeries[];
   id: string; name: string; region: "welang" | "surabaya"; kind: string;
   latitude: number | null; longitude: number | null; observedAt: string | null;
   state: "live" | "historical" | "stale" | "cached" | "unavailable";

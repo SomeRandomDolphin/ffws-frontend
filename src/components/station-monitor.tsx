@@ -19,13 +19,29 @@ const time = new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", dateSt
 const label = (metric: string) => ({ water_level: "Muka air", distance: "Jarak sensor ke permukaan", rainfall: "Curah hujan" } as Record<string, string>)[metric] ?? metric;
 const sensorDescription = (sensor: ArchiveSeries, stationName: string) => {
   const id = sensor.sensor.toLowerCase();
-  if (isDistanceSensor(sensor) || sensor.metric === "distance") return "Jarak antara sensor dan permukaan air.";
-  if (id === "curah_hujan_1h") return "Jumlah curah hujan yang terkumpul selama satu jam terakhir.";
-  if (id === "jumlah_tip") return "Menghitung berapa kali wadah penakar hujan terisi lalu terjungkit. Setiap jungkit mewakili volume air tertentu yang digunakan untuk menghitung curah hujan.";
-  if (id === "curah_hujan") return "Jumlah air hujan yang terukur pada interval pencatatan sensor.";
-  if (sensor.metric === "water_level") return "Ketinggian permukaan air yang diukur oleh sensor.";
-  if (sensor.metric === "rainfall") return "Jumlah air hujan yang terukur pada interval pencatatan sensor.";
-  return `Nilai ${label(sensor.metric).toLowerCase()} yang diukur oleh sensor.`;
+  if (isDistanceSensor(sensor) || sensor.metric === "distance") {
+    const channel = formatSensorLabel(sensor.sensor, stationName);
+    const context = channel.startsWith("Pompa ") ? ` pada ${channel}` : "";
+    return `Jarak dari sensor ke permukaan air${context} untuk menghitung tinggi muka air.`;
+  }
+  const descriptions: Record<string, string> = {
+    flowrate: "Volume air yang melewati titik pengukuran per satuan waktu.",
+    flowvelocity: "Kecepatan gerak air di titik pengukuran.",
+    rpm: "Jumlah putaran perangkat pengukur dalam satu menit.",
+    rain1h: "Pembacaan curah hujan berlabel 1 jam.",
+    rain24h: "Pembacaan curah hujan berlabel 24 jam.",
+    curah_hujan_1h: "Pembacaan curah hujan berlabel 1 jam.",
+    curah_hujan: "Jumlah hujan yang tercatat sesuai periode pengukuran alat.",
+    jumlah_tip: "Jumlah jungkit wadah penakar yang digunakan untuk menghitung curah hujan.",
+    windavg: "Kecepatan angin rata-rata selama periode pencatatan alat.",
+    windir: "Arah angin yang tercatat sesuai acuan arah pada sensor.",
+    windmax: "Kecepatan angin tertinggi selama periode pencatatan alat.",
+    lightlevel: "Tingkat cahaya di sekitar sensor sesuai skala pengukuran alat.",
+  };
+  if (descriptions[id]) return descriptions[id];
+  if (sensor.metric === "water_level") return "Ketinggian permukaan air terhadap acuan pengukuran stasiun.";
+  if (sensor.metric === "rainfall") return "Jumlah hujan yang tercatat sesuai periode pengukuran alat.";
+  return "Parameter tambahan yang keterangannya belum tersedia.";
 };
 type ExportJob = { id: string; status: string; error?: string };
 
@@ -35,14 +51,24 @@ export default function StationMonitor({ stationId, name, compact = false }: { s
   const stationCode = `${stationId.startsWith("welang-") ? "WL" : "SBY"}-${name.replace(/[^a-z0-9]/gi, "").slice(0, 8).toUpperCase()}`;
   const [hours, setHours] = useState(24);
   const [selected, setSelected] = useState("");
+  const [category, setCategory] = useState("Muka air");
+  const [remembered, setRemembered] = useState<Record<string, string>>({});
   const [job, setJob] = useState<ExportJob | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const controller = useRef<AbortController | null>(null);
   const { data: station, error } = useArchive<ArchiveStation>(`stations/${stationId}/snapshot`);
-  const { data: history, error: historyError } = useArchive<{ series: ArchiveSeries[] }>(`stations/${stationId}/history?hours=${hours}`);
-  const rawSeries = history?.series.find(s => `${s.sensor}:${s.metric}` === selected) ?? history?.series.find(s => s.metric === "water_level" || s.metric === "distance") ?? history?.series[0];
+  const group = (s: ArchiveSeries) => s.metric === "water_level" || s.metric === "distance" ? "Muka air" : s.metric === "rainfall" ? "Curah hujan" : /wind/.test(s.sensor) ? "Angin" : /light/.test(s.sensor) ? "Cahaya" : /flow|rpm/.test(s.sensor) ? "Aliran" : "Lainnya";
+  const catalog = station?.sensors ?? station?.series ?? [];
+  const categories: string[] = ["Muka air", "Curah hujan", "Aliran", "Angin", "Cahaya", "Lainnya"].filter(key => catalog.some(item => group(item) === key));
+  const currentCategory = categories.includes(category) ? category : categories[0];
+  const channels = catalog.filter(s => group(s) === currentCategory);
+  const channel = channels.find(s => `${s.sensor}:${s.metric}` === selected) ?? channels[0];
+  const observationTimes = channels.map(item => station?.series.find(s => s.sensor === item.sensor && s.metric === item.metric)?.points.at(-1)?.time);
+  const sharedTime = observationTimes[0] && observationTimes.every(value => value === observationTimes[0]) ? observationTimes[0] : null;
+  const { data: history, error: historyError } = useArchive<{ series: ArchiveSeries[] }>(channel ? `stations/${stationId}/history?hours=${hours}&sensor=${encodeURIComponent(channel.sensor)}` : null);
+  const rawSeries = history?.series.find(s => s.sensor === channel?.sensor && s.metric === channel?.metric);
   const series = rawSeries ? calibratedSeries(rawSeries) : undefined;
   const chartUnit = series?.unit === "unverified" ? "" : series?.unit;
   const chartMeasure = series ? `${label(series.metric)}${chartUnit ? ` (${chartUnit})` : ""}` : "Nilai";
@@ -51,7 +77,7 @@ export default function StationMonitor({ stationId, name, compact = false }: { s
     const prior = points[index - 1];
     return prior && point.time - prior.time > 3600000 ? [{ time: point.time - 1, value: null, source: point.source }, point] : [point];
   });
-  const rawHistorySeries = history?.series ?? [];
+  const rawHistorySeries = rawSeries ? [rawSeries] : [];
   const tabularSeries = rawHistorySeries.map(raw => {
     const distanceReading = isDistanceSensor(raw) && raw.points.some(point => point.waterLevelCm != null);
     const referenceCm = raw.referenceCm ?? station?.referenceCm ?? null;
@@ -62,9 +88,7 @@ export default function StationMonitor({ stationId, name, compact = false }: { s
       unit: distanceReading && referenceCm != null ? "cm" : raw.unit,
       points: raw.points.slice(-10).map(point => ({
         ...point,
-        value: distanceReading && referenceCm != null && point.waterLevelCm != null
-          ? Math.max(0, referenceCm - point.waterLevelCm)
-          : point.value,
+        value: point.value,
       })),
     };
   }).concat(rawHistorySeries
@@ -90,7 +114,7 @@ export default function StationMonitor({ stationId, name, compact = false }: { s
     return [...rows].map(([time, values]) => ({ time, values })).sort((a, b) => b.time - a.time);
   })();
   const waterSensors = station?.series.filter(item => item.metric === "water_level" || item.metric === "distance") ?? [];
-  const activeSensor = waterSensors.find(item => item.sensor === rawSeries?.sensor && item.metric === rawSeries?.metric) ?? waterSensors[0];
+  const activeSensor = station?.series.find(item => item.sensor === channel?.sensor && item.metric === channel?.metric);
   const sensorPoint = activeSensor?.points.at(-1);
   const displaySensor = activeSensor ? calibratedSeries(activeSensor) : undefined;
   const displayValue = displaySensor?.points.at(-1)?.value;
@@ -145,22 +169,36 @@ export default function StationMonitor({ stationId, name, compact = false }: { s
     </header>
     {(error || historyError) && <p role="alert">{error || historyError}</p>}
     {station?.sources.filter(s => s.error).map(s => <p role="status" key={s.id}>{s.error}</p>)}
-    {waterSensors.length > 1 && <section className="monitor-section sensor-select-section" aria-label="Pilih sumber data">
-      <div className="monitor-section-heading"><h2>Pilih sumber data</h2></div>
-      <div className="sensor-picker" role="group" aria-label="Pilih sensor">{waterSensors.map(item => <button type="button" key={`${item.sensor}:${item.metric}`} className={`sensor-option${activeSensor === item ? " is-active" : ""}`} aria-pressed={activeSensor === item} onClick={() => setSelected(`${item.sensor}:${item.metric}`)}>{formatSensorLabel(item.sensor, name)}</button>)}</div>
-    </section>}
-    <section className="monitor-section" aria-label="Ringkasan pembacaan">
-      <div className="monitor-section-heading"><h2>Muka air</h2><span className="monitor-updated">{station?.observedAt ? `${archiveStateLabel[station.state]} · ${time.format(Date.parse(station.observedAt))} WIB` : "Data belum tersedia"}</span></div>
-      <dl className="observation-grid">
-        <div className="observation-primary"><dt>Tinggi muka air</dt><dd>{waterLevel == null ? "—" : <>{waterLevel.toFixed(2)} <small>m</small></>}</dd><span>{reference != null ? "Di atas dasar" : activeSensor ? "Pembacaan sumber" : "Data belum tersedia"}</span></div>
-        <div><dt>Jarak sensor (Distance)</dt><dd>{hasDistance && sensorPoint?.value != null ? <>{sensorPoint.value.toFixed(1)} <small>{activeSensor?.unit === "unverified" ? "" : activeSensor?.unit}</small></> : "—"}</dd><span>Jarak ke permukaan air</span></div>
-        <div><dt>Acuan tinggi dasar</dt><dd>{reference == null ? "—" : <>{reference.toFixed(1)} <small>cm</small></>}</dd><span>{reference == null ? "Belum dikonfigurasi" : "Tinggi sensor ke dasar"}</span></div>
-        <div><dt>Sensor aktif</dt><dd>{activeSensor ? formatSensorLabel(activeSensor.sensor, name) : "—"}</dd><span>Total {waterSensors.length} channel sensor</span></div>
+    <section className="monitor-section sensor-select-section" aria-label="Parameter" onKeyDown={event => {
+      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key) || !(event.target instanceof HTMLButtonElement)) return;
+      const buttons = [...event.currentTarget.querySelectorAll<HTMLButtonElement>(".parameter-segments button")];
+      const index = buttons.indexOf(event.target);
+      if (index < 0) return;
+      event.preventDefault();
+      const next = event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + buttons.length) % buttons.length;
+      buttons[next].focus(); buttons[next].click();
+    }}>
+      <div className="sensor-picker parameter-segments" role="group" aria-label="Parameter">{categories.length === 1 ? <span>{currentCategory}</span> : categories.map(key => <button key={key} className={`sensor-option${key === currentCategory ? " is-active" : ""}`} aria-pressed={key === currentCategory} onClick={() => { setRemembered(current => ({...current, [currentCategory]: channel ? `${channel.sensor}:${channel.metric}` : ""})); setCategory(key); setSelected(remembered[key] ?? ""); }}>{key}</button>)}</div>
+    </section>
+    <section className="monitor-section reading-panel" aria-label="Ringkasan pembacaan">
+      <div className="monitor-section-heading"><h2>{currentCategory ?? "Pengamatan"}</h2>{sharedTime && <span className="monitor-updated">Pengamatan · {time.format(Date.parse(sharedTime))} WIB</span>}</div>
+      <dl className="observation-grid parameter-summary">
+        {channels.map(item => {
+          const latest = station?.series.find(s => s.sensor === item.sensor && s.metric === item.metric);
+          const display = latest ? calibratedSeries(latest) : undefined;
+          const point = display?.points.at(-1);
+          const unit = display?.unit === "unverified" ? "" : display?.unit;
+          const sensorName = formatSensorLabel(item.sensor, name);
+          const referenceCm = item.referenceCm ?? station?.referenceCm;
+          const percentage = point?.value != null && referenceCm != null && referenceCm > 0 && point.capacityPercent != null && Number.isFinite(point.capacityPercent) ? Math.max(0, Math.min(100, point.capacityPercent)) : null;
+          return <div className={item.sensor === "jumlah_tip" ? "observation-supporting" : "observation-primary"} key={`${item.sensor}:${item.metric}`}><dt>{currentCategory === "Muka air" ? `Tinggi muka air · ${sensorName}` : sensorName}{!sharedTime && <small className="reading-channel-time">{point?.time ? `${time.format(Date.parse(point.time))} WIB` : "Belum ada pembacaan"}</small>}</dt><dd>{point?.value == null ? "—" : new Intl.NumberFormat("id-ID", { minimumFractionDigits: item.sensor === "jumlah_tip" ? 0 : 2, maximumFractionDigits: item.sensor === "jumlah_tip" ? 0 : 2 }).format(point.value)} <small>{unit}</small></dd>{currentCategory === "Muka air" && percentage != null && referenceCm != null && <dd className="reading-level-scale"><div className="reading-level-caption"><span>{percentage.toFixed(0)}% kapasitas</span></div><div className="reading-level-track" role="meter" aria-label={`${sensorName}: kapasitas`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentage} aria-valuetext={`${percentage.toFixed(0)} persen kapasitas, maksimum ${(referenceCm / 100).toLocaleString("id-ID")} meter`}><div style={{ width: `${percentage}%` }} /></div><div className="reading-level-ticks"><span>0 m</span><span>{(referenceCm / 100).toLocaleString("id-ID")} m</span></div></dd>}</div>;
+        })}
       </dl>
+      {currentCategory === "Muka air" && <dl className="reading-reference">{[...new Set(channels.map(item => item.referenceCm ?? station?.referenceCm).filter((value): value is number => value != null))].map(value => <div key={value}><dt>Acuan tinggi dasar{channels.some(item => item.referenceCm != null && item.referenceCm !== value) ? ` · ${channels.filter(item => item.referenceCm === value).map(item => formatSensorLabel(item.sensor, name)).join(", ")}` : ""}</dt><dd>{new Intl.NumberFormat("id-ID", { maximumFractionDigits:1 }).format(value)} cm</dd></div>)}</dl>}
     </section>
     <section className="monitor-section" aria-label="Riwayat pengamatan">
       <div className="monitor-section-heading"><h2>Riwayat pengamatan</h2></div>
-      <div className="history-controls"><div className="monitor-toggle" role="group" aria-label="Rentang riwayat">
+      <div className="history-controls">{channels.length > 1 && <div className="chart-sensor-select"><select aria-label="Pilih sensor grafik" value={channel ? `${channel.sensor}:${channel.metric}` : ""} onChange={event => setSelected(event.target.value)}>{channels.map(item => <option key={`${item.sensor}:${item.metric}`} value={`${item.sensor}:${item.metric}`}>{formatSensorLabel(item.sensor, name)}</option>)}</select><svg className="chart-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></div>}<div className="monitor-toggle" role="group" aria-label="Rentang riwayat">
         {[6, 24, 168].map(value => <button key={value} aria-pressed={value === hours} onClick={() => setHours(value)}>{value === 168 ? "7 hari" : `${value} jam`}</button>)}
       </div><button className="archive-download" type="button" aria-busy={busy} disabled={busy || !station?.observedAt} onClick={() => void download()}>{busy && <span className="archive-download-spinner" aria-hidden="true" />}<span>{busy ? "Menyiapkan data…" : "Unduh data"}</span></button></div>
       {downloadError && <p role="alert">{downloadError}</p>}
@@ -171,13 +209,13 @@ export default function StationMonitor({ stationId, name, compact = false }: { s
             return active && point ? <div className="monitor-tooltip"><strong>{time.format(point.time)} WIB</strong><span>{chartMeasure}: {point.value == null ? "—" : `${point.value.toFixed(3)}${chartUnit ? ` ${chartUnit}` : ""}`}</span></div> : null;
           }} />
           <Area dataKey="value" fill={chartTheme.rainFill} fillOpacity={0.28} stroke="none" isAnimationActive={false} /><Line dataKey="value" stroke={chartTheme.water} strokeWidth={2.5} dot={false} connectNulls={false} isAnimationActive={false} /></ComposedChart>
-      </ResponsiveContainer></figure> : <p role="status">{history ? "Data belum tersedia pada rentang ini." : "Memuat riwayat…"}</p>}
+      </ResponsiveContainer></figure> : <p role="status">{historyError ? "Riwayat belum dapat dimuat. Mencoba lagi otomatis." : !sensorPoint ? "Belum ada pembacaan." : history ? "Tidak ada data pada rentang ini." : "Memuat riwayat…"}</p>}
       <details className="history-data"><summary>Lihat data tabular</summary>
         <div className="monitor-table-wrap"><table className="monitor-table" style={{ minWidth: `${Math.max(620, 190 + tabularSeries.reduce((total, item) => total + (item.key.endsWith(":derived-water-level") ? 190 : 130), 0))}px` }}><caption>10 pengamatan terbaru tiap sensor pada rentang dipilih</caption><thead><tr><th>Waktu (WIB)</th>{tabularSeries.map(sensor => <th key={sensor.key} className={sensor.key.endsWith(":derived-water-level") ? "water-level-column" : undefined}>{sensor.sensor}</th>)}</tr></thead><tbody>{tabularRows.map(row => <tr key={row.time}><td>{time.format(row.time)}</td>{tabularSeries.map(sensor => { const value = row.values[sensor.key]; return <td key={sensor.key} className={sensor.key.endsWith(":derived-water-level") ? "water-level-column" : undefined}>{value == null ? "—" : `${value.toFixed(3)}${sensor.unit !== "unverified" ? ` ${sensor.unit}` : ""}`}</td>; })}</tr>)}</tbody></table></div>
       </details>
     </section>
     <section className="monitor-section" aria-label="Informasi sensor"><h2>Keterangan Sensor</h2>
-      {station?.series.length ? <div className="monitor-table-wrap"><table className="monitor-table sensor-description-table"><caption>Daftar sensor dan fungsi pengukurannya</caption><thead><tr><th>Sensor</th><th>Keterangan</th></tr></thead><tbody>{station.series.map(item => <tr key={`${item.sensor}:${item.metric}`}><td>{formatSensorLabel(item.sensor, name)}</td><td>{sensorDescription(item, name)}</td></tr>)}</tbody></table></div> : <p>Data sensor belum tersedia.</p>}
+      {catalog.length ? <div className="monitor-table-wrap"><table className="monitor-table sensor-description-table"><caption>Daftar sensor dan fungsi pengukurannya</caption><thead><tr><th>Sensor</th><th>Keterangan</th></tr></thead><tbody>{catalog.map(item => <tr key={`${item.sensor}:${item.metric}`}><td>{formatSensorLabel(item.sensor, name)}</td><td>{sensorDescription(item, name)}</td></tr>)}</tbody></table></div> : <p>Data sensor belum tersedia.</p>}
     </section>
     <section className="monitor-section"><div className="monitor-section-heading"><div><h2>Informasi fasilitas &amp; lokasi</h2></div><Link href={back}>Buka di dashboard peta</Link></div>
       <div className={compact ? undefined : "location-layout"}><div><dl className="station-metadata">

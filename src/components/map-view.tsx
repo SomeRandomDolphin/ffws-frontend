@@ -136,7 +136,8 @@ export default function MapView(props: Props) {
       };
       addText("strong", station.name, "popup-station-name");
       const primary = station.sensors.find(sensor => sensor.valueCm !== null);
-      addText("span", primary?.valueCm == null ? "—" : `${primary.valueCm.toFixed(1)} cm`, "popup-reading");
+      addText("small", "Tinggi muka air", "popup-kicker");
+      addText("span", primary?.waterLevelCm == null ? "—" : `${(primary.waterLevelCm / 100).toFixed(2)} m`, "popup-reading");
       addText("small", `Waktu data · ${liveTime(station.observedAt)}`, "popup-time");
       if (menu) {
         const actions = document.createElement("div"); actions.className = "popup-actions";
@@ -185,7 +186,22 @@ export default function MapView(props: Props) {
     arrangeLabels.current = () => {
       if (!container.current) return;
       const bounds = container.current.getBoundingClientRect();
-      const entries = [...markers.current.entries()].sort(([a], [b]) => Number(b === latest.current.selected) - Number(a === latest.current.selected));
+      const zoom = map.getZoom();
+      // Match ScaleControl's 100px measurement at the map's center.
+      // Its metric label changes from 20 km to 10 km below 20,000m.
+      const x = container.current.clientWidth / 2;
+      const y = container.current.clientHeight / 2;
+      const scaleMeters = map.unproject([x - 50, y]).distanceTo(map.unproject([x + 50, y]));
+      const markerOpacity = Math.max(0, Math.min(1, (20000 - scaleMeters) / 6000));
+      container.current.style.setProperty("--station-opacity", String(markerOpacity));
+      container.current.style.setProperty("--station-visibility", markerOpacity > 0 ? "visible" : "hidden");
+      if (markerOpacity === 0) popup.current?.remove();
+      const detail = Math.max(0, Math.min(1, (zoom - 7) / 4));
+      container.current.style.setProperty("--station-dot-size", `${8 + detail * 8}px`);
+      container.current.style.setProperty("--station-selected-size", `${11 + detail * 8}px`);
+      const entries = [...markers.current.entries(), ...liveMarkers.current.entries()]
+        .filter(([, marker]) => marker.getElement().style.display !== "none")
+        .sort(([, a], [, b]) => Number(b.getElement().classList.contains("is-selected")) - Number(a.getElement().classList.contains("is-selected")));
       const dots = entries.map(([, marker]) => marker.getElement().querySelector(".station-pin-dot")!.getBoundingClientRect());
       const occupied: Array<{ left: number; right: number; top: number; bottom: number }> = [...dots];
       const search = container.current.parentElement?.querySelector(".station-search");
@@ -193,14 +209,17 @@ export default function MapView(props: Props) {
       const overlaps = (a: typeof occupied[number], b: typeof occupied[number]) => a.left < b.right + 4 && a.right + 4 > b.left && a.top < b.bottom + 3 && a.bottom + 3 > b.top;
       for (const [, marker] of entries) {
         const button = marker.getElement();
+        button.inert = markerOpacity === 0;
         const label = button.querySelector<HTMLElement>(".station-pin-label")!;
-        label.style.visibility = "hidden";
+        label.style.opacity = "0";
         if (!latest.current.activeLayers.includes("labels")) continue;
+        if (zoom < 9 && document.activeElement !== button && !button.matches(":hover")) continue;
         for (const position of ["right", "left", "top", "bottom"]) {
           label.dataset.position = position;
           const rect = label.getBoundingClientRect();
           if (rect.left < bounds.left + 8 || rect.right > bounds.right - 8 || rect.top < bounds.top + 8 || rect.bottom > bounds.bottom - 30 || occupied.some((other) => overlaps(rect, other))) continue;
-          label.style.visibility = "visible";
+          const interacting = document.activeElement === button || button.matches(":hover");
+          label.style.opacity = String(interacting ? 1 : Math.max(0, Math.min(1, (zoom - 9) / .8)));
           occupied.push(rect);
           break;
         }
@@ -289,7 +308,7 @@ export default function MapView(props: Props) {
       }
       marker.setLngLat([station.longitude, station.latitude]);
       const button = marker.getElement();
-      button.style.display = props.region === "surabaya" ? "grid" : "none";
+      button.style.display = props.region !== "welang" ? "grid" : "none";
       button.style.setProperty("--station-color", station.state === "live" && !props.liveDisconnected ? connectionColors.live : connectionColors.delayed);
       button.classList.toggle("is-selected", station.name === props.selected);
       button.classList.toggle("has-label", props.activeLayers.includes("labels"));
@@ -297,6 +316,7 @@ export default function MapView(props: Props) {
       button.setAttribute("aria-pressed", String(station.name === props.selected));
       button.title = `${station.name} · posisi sensor belum terverifikasi`;
     }
+    arrangeLabels.current();
   }, [props.liveStations, props.liveDisconnected, props.region, props.selected, props.activeLayers, ready]);
 
   useEffect(() => {
@@ -306,7 +326,7 @@ export default function MapView(props: Props) {
       if (!marker) return;
       marker.setLngLat([station.longitude, station.latitude]);
       const button = marker.getElement();
-      button.style.display = props.region === "welang" ? "grid" : "none";
+      button.style.display = props.region !== "surabaya" ? "grid" : "none";
       button.style.setProperty("--station-color", station.color);
       button.style.setProperty("--quality-color", qualityColors[station.quality.status]);
       button.style.setProperty("--rain-size", `${Math.min(52, 18 + (Number.isFinite(station.rainfall30mMm) ? station.rainfall30mMm : 0) * 2.4)}px`);

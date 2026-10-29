@@ -21,8 +21,8 @@ export const surabayaStationFallback: LiveStation[] = [
 ];
 export const liveStateLabel: Record<LiveStation["state"], string> = { live: "Terkini", stale: "Data terlambat", cached: "Data tersimpan", unavailable: "Belum ada data", future: "Waktu tidak valid" };
 export function formatSensorLabel(id: string, stationName?: string) {
-  const isPucang = stationName ? stationName.toLowerCase().includes("pucang") : false;
-  if (isPucang) {
+  const usesPumpLabels = stationName ? /pucang|kalibokor/i.test(stationName) : false;
+  if (usesPumpLabels) {
     if (id.toLowerCase() === "distance1" || id.toLowerCase() === "distance_1") return "Pompa 1";
     if (id.toLowerCase() === "distance2" || id.toLowerCase() === "distance_2") return "Pompa 2";
     if (id.toLowerCase() === "distance") return "Pompa 1";
@@ -32,7 +32,7 @@ export function formatSensorLabel(id: string, stationName?: string) {
       ? "Pembacaan Sensor Jarak 1"
       : "Sensor Jarak 1";
   }
-  return id;
+  return ({ curah_hujan: "Curah hujan", curah_hujan_1h: "Hujan 1 jam", rain1h: "Hujan 1 jam", rain24h: "Hujan 24 jam", jumlah_tip: "Jumlah tip", distance: "Sensor jarak", distance2: "Sensor jarak 2", flowrate: "Debit aliran", flowvelocity: "Kecepatan aliran", rpm: "Putaran perangkat", windavg: "Angin rata-rata", windmax: "Angin maksimum", windir: "Arah angin", lightlevel: "Tingkat cahaya", water_level: "Muka air" } as Record<string, string>)[id.toLowerCase()] ?? id;
 }
 
 export function liveTime(value: string | null) {

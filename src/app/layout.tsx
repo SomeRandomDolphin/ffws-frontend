@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
 import "./map-dashboard.css";
+import "./design-system.css";
 export const metadata: Metadata = {
   title: "ITS Water Dashboard",
   description: "Dashboard simulasi muka air DAS Welang",
