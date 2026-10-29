@@ -34,6 +34,5 @@ export default function LegendPanel({ onClose, activeLayers, sources }: { onClos
       {!activeLayers.some(key => ["basin", "topology", "surabayaRivers", "subdas", "admin", "regionalRivers"].includes(key)) && <small>Tidak ada overlay geospasial aktif.</small>}
     </section></details>
     {((activeLayers.includes("topology") && sources.topology) || (activeLayers.includes("surabayaRivers") && sources.surabayaRivers) || (activeLayers.includes("regionalRivers") && sources.eastRivers)) && <p className="legend-note">Sumber data sungai: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a> · <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noreferrer">ODbL</a></p>}
-    <p className="legend-note">Seluruh pembacaan muka air, hujan, dan kualitas air pada tahap ini adalah data simulasi.</p>
   </aside>;
 }
