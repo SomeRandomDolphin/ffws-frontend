@@ -1,4 +1,5 @@
 import Icon from "./icon";
+import { Switch } from "./ui/switch";
 import WaterwayKey from "./waterway-key";
 import { basemaps, type BasemapId, type BasemapFeedback } from "@/lib/basemap-catalog";
 import type { GeoSources } from "@/lib/geodata";
@@ -15,9 +16,9 @@ export default function LayersPanel(props: Props) {
 
     <section>
       <h3><Icon name="pin" />Stasiun</h3>
-      <label className="layer-switch"><span>Nama stasiun</span><input type="checkbox" checked={props.active.includes("labels")} onChange={() => props.onToggle("labels")} /></label>
-      <label className="layer-switch"><span>Intensitas hujan</span><input type="checkbox" checked={props.active.includes("rainfall")} onChange={() => props.onToggle("rainfall")} /></label>
-      <label className="layer-switch"><span>Kualitas air</span><input type="checkbox" checked={props.active.includes("quality")} onChange={() => props.onToggle("quality")} /></label>
+      <label className="layer-switch"><span>Nama stasiun</span><Switch checked={props.active.includes("labels")} onCheckedChange={() => props.onToggle("labels")} aria-label="Nama stasiun" /></label>
+      <label className="layer-switch"><span>Intensitas hujan</span><Switch checked={props.active.includes("rainfall")} onCheckedChange={() => props.onToggle("rainfall")} aria-label="Intensitas hujan" /></label>
+      <label className="layer-switch"><span>Kualitas air</span><Switch checked={props.active.includes("quality")} onCheckedChange={() => props.onToggle("quality")} aria-label="Kualitas air" /></label>
     </section>
 
     <section>
