@@ -21,15 +21,6 @@ export default function LayersPanel(props: Props) {
     </section>
 
     <section>
-      <h3>Jaringan sungai</h3>
-      <details className="layer-disclosure"><summary>Pengaturan opasitas</summary><label className="opacity-control"><span>Opasitas <output>{Math.round(props.opacity.topology * 100)}%</output></span><input aria-label="Opasitas sungai" type="range" min="0" max="100" value={Math.round(props.opacity.topology * 100)} onChange={event => {
-        const value = Number(event.target.value) / 100;
-        props.onOpacity("topology", value);
-        props.onOpacity("surabayaRivers", value);
-      }} /></label></details>
-    </section>
-
-    <section>
       <h3>Wilayah</h3>
       <label className="layer-switch"><span>Batas kabupaten/kota</span><Switch aria-label="Batas kabupaten/kota" disabled={!props.sources.admin} checked={props.sources.admin && props.active.includes("admin")} onCheckedChange={() => props.onToggle("admin")} /></label>
       <label className="layer-switch"><span>Sungai besar Jawa Timur</span><Switch aria-label="Sungai besar Jawa Timur" disabled={!props.sources.eastRivers} checked={props.sources.eastRivers && props.active.includes("regionalRivers")} onCheckedChange={() => props.onToggle("regionalRivers")} /></label>
