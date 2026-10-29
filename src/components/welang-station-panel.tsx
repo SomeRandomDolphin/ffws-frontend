@@ -17,8 +17,9 @@ export default function WelangStationPanel({ station, showHeading = true }: { st
     className="welang-preview"
     heading={showHeading && <header className="live-heading"><div><span className="live-eyebrow">DAS Welang · Pasuruan</span><h2>{station.name}</h2></div></header>}
     gauge={{
-      value: number(station.valueM * 100, 1),
-      subtitle: `${number(station.valueM, 2)} meter`,
+      value: Number.isFinite(station.valueM) ? station.valueM.toLocaleString("id-ID", {minimumFractionDigits:2, maximumFractionDigits:2}) : "—",
+      unit: "m",
+      subtitle: Number.isFinite(station.valueM) ? "Tinggi muka air" : "Data belum tersedia",
       percentage: capacityPercentage,
       capacityLabel: capacityPercentage == null ? "Ambang belum tersedia" : `${capacityPercentage.toFixed(0)}% menuju ambang bahaya`,
       title: capacityPercentage == null ? "Ambang belum dikonfigurasi" : `Muka air ${number(station.valueM, 2)} m dari ambang bahaya ${number(station.dangerM, 2)} m`,

@@ -15,6 +15,24 @@
 .ds-map-panel-heading { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--line); }
 .ds-map-panel-heading h2 { margin:0; font-size:20px; }
 .ds-map-panel-body { min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+.ds-map-panel-body .live-station-panel { padding:16px 20px 24px; }
+.ds-map-panel-body .live-gauge-container { padding:16px; margin:0 0 24px; background:var(--color-bg); border:0; }
+.ds-map-panel-body .live-level-visual { display:block; }
+.ds-map-panel-body .live-reading-block { gap:8px; }
+.live-reading-label { color:var(--muted); font-size:var(--text-label); }
+.preview-capacity { display:grid; gap:8px; margin-top:8px; color:var(--muted); font-size:var(--text-caption); }
+.preview-capacity-track { height:8px; overflow:hidden; background:var(--line); border-radius:4px; }
+.preview-capacity-track > div { height:100%; border-radius:inherit; background:var(--blue); transition:width 220ms var(--ease); }
+.preview-sensor-details summary,.preview-forecast summary { display:list-item; min-height:44px; align-content:center; cursor:pointer; color:var(--muted); font-size:var(--text-label); }
+.preview-forecast { margin-top:24px; }
+.ds-map-panel-body .live-timestamp { margin:0 0 16px; }
+.preview-detail-link { display:flex; align-items:center; justify-content:space-between; min-height:44px; margin:0 20px 20px; padding:10px 16px; border:1px solid var(--color-control-border); border-radius:6px; text-decoration:none; color:var(--blue); }
+.preview-detail-link:hover { background:var(--color-selection-bg); }
+.ds-map-panel-body .live-calc-breakdown { margin:0; padding:8px 0 0; border:0; gap:16px; }
+.ds-map-panel-body .live-calc-item dt { font-size:var(--text-caption); }
+.ds-map-panel-body .live-station-panel h3 { margin:0 0 12px; }
+.ds-map-panel-body .live-chart { height:220px; margin:0; }
+.ds-map-panel-body .live-extra dl div { border:0; }
 .ds-map-panel-compact { width:min(360px,calc(100vw - 24px)); }
 .ds-map-panel-body > .map-legend-overlay { position:static; width:auto; padding:16px 20px 24px; border:0; border-radius:0; box-shadow:none; overflow:visible; animation:none; }
 .ds-map-panel-body > .map-legend-overlay > .map-legend-heading { display:none; }

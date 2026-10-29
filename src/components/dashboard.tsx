@@ -157,12 +157,14 @@ export default function Dashboard() {
         {liveOpen && (
           <MapPanel title={liveStation?.name ?? "Detail sensor"} onClose={closeLive}>
             {liveStation ? <LiveStationPanel station={liveStation} disconnected={!!liveError} /> : <p role="status" className="live-loading">{liveError ?? "Memuat data stasiun…"}</p>}
+            {liveStation && <Link className="preview-detail-link" href={`/station/${encodeURIComponent(liveStation.name)}`}>Lihat detail stasiun <span aria-hidden="true">→</span></Link>}
           </MapPanel>
         )}
         {welangDrawerOpen && station && (
           <MapPanel title={station.name} onClose={() => setWelangDrawerOpen(false)}>
             {welangError && <p role="status" className="live-note">{welangError}</p>}
             <WelangStationPanel station={station} showHeading={false} />
+            <Link className="preview-detail-link" href={`/station/${encodeURIComponent(station.name)}`}>Lihat detail stasiun <span aria-hidden="true">→</span></Link>
           </MapPanel>
         )}
         {activePanel === "legend" && <MapPanel compact title="Legenda" onClose={closePanel}><LegendPanel onClose={closePanel} activeLayers={activeLayers} sources={hydroSources} /></MapPanel>}

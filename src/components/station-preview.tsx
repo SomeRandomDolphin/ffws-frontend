@@ -26,8 +26,7 @@ export default function StationPreview({ ariaLabel, className, heading, notices,
     </div>
     <h3 id="riwayat-sensor">{historyTitle}</h3>
     <StationHistoryChart {...history} />
-    <h3>Prakiraan +1 sampai +5 jam</h3>
-    {forecast}
+    <details className="preview-forecast"><summary>Prakiraan +1 sampai +5 jam</summary>{forecast}</details>
     {extra}
   </section>;
 }

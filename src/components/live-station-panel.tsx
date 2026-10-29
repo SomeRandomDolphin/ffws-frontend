@@ -24,13 +24,14 @@ export default function LiveStationPanel({ station, disconnected = false }: { st
 
   return <StationPreview
     ariaLabel={`Data live ${station.name}`}
-    notices={station.error && <p role="status" className="live-warning">{station.error}</p>}
+    notices={<><p className="live-timestamp">Pengamatan · {liveTime(station.observedAt)}</p>{station.error && <p role="status" className="live-warning">{station.error}</p>}</>}
     controls={station.sensors.length > 1 && <div className="live-sensor-tabs" role="group" aria-label="Pilih kanal sensor">
       {station.sensors.map(item => <button key={item.id} type="button" className="live-sensor-tab" aria-pressed={sensor?.id === item.id} onClick={() => setSelected(item.id)}>{formatSensorLabel(item.id, station.name)}</button>)}
     </div>}
     gauge={{
-      value: waterLevelCm !== null ? waterLevelCm.toFixed(1) : "—",
-      subtitle: waterLevelM !== null ? `${waterLevelM.toFixed(2)} meter di atas dasar` : "Data belum tersedia",
+      value: waterLevelM !== null ? waterLevelM.toLocaleString("id-ID", {minimumFractionDigits:2, maximumFractionDigits:2}) : "—",
+      unit: "m",
+      subtitle: waterLevelM !== null ? "Di atas dasar" : "Data belum tersedia",
       percentage,
       capacityLabel: percentage == null ? "Data belum tersedia" : `${percentage.toFixed(0)}% Kapasitas`,
       title: `Tinggi air ${waterLevelCm !== null ? waterLevelCm.toFixed(1) : "—"} cm dari acuan ${groundReferenceCm?.toFixed(0) ?? "—"} cm`,
@@ -39,7 +40,7 @@ export default function LiveStationPanel({ station, disconnected = false }: { st
         { label: "Acuan Tinggi Sensor ke Dasar", value: `${groundReferenceCm?.toFixed(1) ?? "—"} cm` },
       ],
     }}
-    historyTitle={`Riwayat sensor ${sensor ? formatSensorLabel(sensor.id, station.name) : ""}`}
+    historyTitle="Riwayat muka air"
     history={{ points: history, unit: "cm", loading: !!sensor && !archiveHistory && !historyError, error: historyError }}
     forecast={<>{hideForecast ? <p className="live-note">{sensor?.forecast.reason ?? "Prediksi terkini tidak tersedia."}</p> : <>
       {!!sensor?.forecast.points.length && <div className="live-table-wrap"><table><caption>Acuan prediksi: {liveTime(sensor.forecast.issuedAt)} · bukan peringatan resmi</caption><thead><tr><th>Waktu berlaku</th><th>Horizon</th><th>Tinggi air</th></tr></thead><tbody>{sensor.forecast.points.map(point => <tr key={point.leadHours}><td>{liveTime(point.time)}</td><td>+{point.leadHours} jam</td><td>{point.waterLevelCm?.toFixed(1) ?? "—"} cm</td></tr>)}</tbody></table></div>}
