@@ -60,6 +60,9 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64
+          build-args: |
+            NEXT_PUBLIC_BASE_PATH=/tsipil/informasibanjir/ffws
+            NEXT_PUBLIC_MONITORING_API_URL=/tsipil/informasibanjir/ffws/monitoring-api
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
