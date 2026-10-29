@@ -15,6 +15,12 @@
 .ds-map-panel-heading { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--line); }
 .ds-map-panel-heading h2 { margin:0; font-size:20px; }
 .ds-map-panel-body { min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+.ds-map-panel-body .live-station-panel { padding:16px 20px 24px; }
+.ds-map-panel-body .live-gauge-container { padding:16px; margin:0 0 24px; }
+.ds-map-panel-body .live-calc-breakdown { margin-bottom:0; margin-top:16px; padding-top:12px; gap:12px; }
+.ds-map-panel-body .live-station-panel h3 { margin:24px 0 12px; }
+.ds-map-panel-body .live-chart { margin:12px 0 24px; }
+.ds-map-panel-body .live-extra { margin-top:24px; }
 .ds-map-panel-compact { width:min(360px,calc(100vw - 24px)); }
 .ds-map-panel-body > .map-legend-overlay { position:static; width:auto; padding:16px 20px 24px; border:0; border-radius:0; box-shadow:none; overflow:visible; animation:none; }
 .ds-map-panel-body > .map-legend-overlay > .map-legend-heading { display:none; }
