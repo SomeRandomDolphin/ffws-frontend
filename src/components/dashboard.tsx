@@ -117,6 +117,7 @@ export default function Dashboard() {
     setFocusRequest((current) => ({ name: item.name, sequence: (current?.sequence ?? 0) + 1 }));
   };
   const togglePanel = (panel: Panel) => {
+    setLiveOpen(false); setWelangDrawerOpen(false);
     if (window.matchMedia("(max-width: 700px)").matches) { setWelangDrawerOpen(false); }
     if (activePanel === "overview") dismissOverview();
     setActivePanel((current) => current === panel ? null : panel);
@@ -164,9 +165,9 @@ export default function Dashboard() {
             <WelangStationPanel station={station} showHeading={false} />
           </MapPanel>
         )}
-        {shownPanel === "legend" && <div className={`map-legend-shell${activePanel ? "" : " is-closing"}`} inert={!activePanel} onKeyDown={(event) => { if (event.key === "Escape") closePanel(); }}><LegendPanel onClose={closePanel} activeLayers={activeLayers} sources={hydroSources} /></div>}
-        {shownPanel === "overview" && <div className={`map-legend-shell${activePanel ? "" : " is-closing"}`} inert={!activePanel} onKeyDown={(event) => { if (event.key === "Escape") closePanel(); }}><OverviewPanel onClose={closePanel} /></div>}
-        {shownPanel === "layers" && <div className={`map-legend-shell${activePanel ? "" : " is-closing"}`} inert={!activePanel} onKeyDown={(event) => { if (event.key === "Escape") closePanel(); }}><LayersPanel active={activeLayers} opacity={opacity} sources={hydroSources} region={region} selected={basemap} feedback={basemapFeedback} onSelect={chooseBasemap} onToggle={toggleLayer} onOpacity={(key,value) => setOpacity(current => ({...current,[key]:value}))} onClear={() => setActiveLayers(current => current.filter(key => key === "topology" || key === "surabayaRivers"))} onClose={closePanel} /></div>}
+        {activePanel === "legend" && <MapPanel compact title="Legenda" onClose={closePanel}><LegendPanel onClose={closePanel} activeLayers={activeLayers} sources={hydroSources} /></MapPanel>}
+        {activePanel === "overview" && <MapPanel compact title="Ringkasan" onClose={closePanel}><OverviewPanel onClose={closePanel} /></MapPanel>}
+        {activePanel === "layers" && <MapPanel compact title="Lapisan peta" onClose={closePanel}><LayersPanel active={activeLayers} opacity={opacity} sources={hydroSources} region={region} selected={basemap} feedback={basemapFeedback} onSelect={chooseBasemap} onToggle={toggleLayer} onOpacity={(key,value) => setOpacity(current => ({...current,[key]:value}))} onClear={() => setActiveLayers(current => current.filter(key => key === "topology" || key === "surabayaRivers"))} onClose={closePanel} /></MapPanel>}
       </div>
     </section>
     <SiteFooter />
