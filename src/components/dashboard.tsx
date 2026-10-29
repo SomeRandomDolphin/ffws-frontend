@@ -23,6 +23,7 @@ import LiveStationPanel from "./live-station-panel";
 import { surabayaNames, surabayaStationFallback, liveStateLabel, liveTime, type LiveStation } from "@/lib/surabaya";
 import WelangStationPanel from "./welang-station-panel";
 import RegionFilter from "./region-filter";
+import { MapPanel } from "./ui/map-panel";
 
 
 type Panel = "overview" | "layers" | "legend";
@@ -162,14 +163,10 @@ export default function Dashboard() {
           </aside>
         )}
         {welangDrawerOpen && station && (
-          <aside className="live-drawer" aria-label={`Detail stasiun ${station.name}`} onKeyDown={(event) => { if (event.key === "Escape") setWelangDrawerOpen(false); }}>
-            <div className="live-drawer-topbar">
-              <strong>{station.name}</strong>
-              <button className="live-close" aria-label="Tutup detail" onClick={() => setWelangDrawerOpen(false)}><span aria-hidden="true">×</span></button>
-            </div>
+          <MapPanel title={station.name} onClose={() => setWelangDrawerOpen(false)}>
             {welangError && <p role="status" className="live-note">{welangError}</p>}
             <WelangStationPanel station={station} showHeading={false} />
-          </aside>
+          </MapPanel>
         )}
         {shownPanel === "legend" && <div className={`map-legend-shell${activePanel ? "" : " is-closing"}`} inert={!activePanel} onKeyDown={(event) => { if (event.key === "Escape") closePanel(); }}><LegendPanel onClose={closePanel} activeLayers={activeLayers} sources={hydroSources} /></div>}
         {shownPanel === "overview" && <div className={`map-legend-shell${activePanel ? "" : " is-closing"}`} inert={!activePanel} onKeyDown={(event) => { if (event.key === "Escape") closePanel(); }}><OverviewPanel onClose={closePanel} /></div>}

@@ -5,6 +5,12 @@
 .ds-select-item[data-highlighted] { background:var(--color-selection-bg); }
 .ds-select-item[data-state=checked] { color:var(--color-action); font-weight:600; }
 .ds-select-scroll { text-align:center; padding:4px; }
+.ds-map-panel { position:fixed; z-index:60; right:12px; top:88px; bottom:48px; width:min(460px,calc(100vw - 24px)); display:flex; flex-direction:column; background:var(--surface); color:var(--color-text); border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow); }
+.ds-map-panel-heading { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--line); }
+.ds-map-panel-heading h2 { margin:0; font-size:20px; }
+.ds-map-panel-body { min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+.ds-map-panel-backdrop { position:fixed; inset:0; z-index:59; background:#172b3a66; }
+@media(max-width:700px) { .ds-map-panel { inset:0; width:100%; border-radius:0; } }
 .ds-button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:10px 16px; border:1px solid transparent; border-radius:6px; font-weight:500; text-decoration:none; }
 .ds-button-primary { background:var(--color-action); color:white; }
 .ds-button-primary:hover { background:var(--color-action-hover); }
