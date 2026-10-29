@@ -23,11 +23,11 @@ export default function LayersPanel(props: Props) {
 
     <section>
       <h3>Jaringan sungai</h3>
-      <label className="opacity-control"><span>Opasitas <output>{Math.round(props.opacity.topology * 100)}%</output></span><input aria-label="Opasitas sungai" type="range" min="0" max="100" value={Math.round(props.opacity.topology * 100)} onChange={event => {
+      <details className="layer-disclosure"><summary>Pengaturan opasitas</summary><label className="opacity-control"><span>Opasitas <output>{Math.round(props.opacity.topology * 100)}%</output></span><input aria-label="Opasitas sungai" type="range" min="0" max="100" value={Math.round(props.opacity.topology * 100)} onChange={event => {
         const value = Number(event.target.value) / 100;
         props.onOpacity("topology", value);
         props.onOpacity("surabayaRivers", value);
-      }} /></label>
+      }} /></label></details>
       <details className="layer-disclosure"><summary>Arti simbol sungai</summary><WaterwayKey /></details>
     </section>
 
