@@ -49,6 +49,7 @@
 .forecast-chart-key span { display:inline-flex; align-items:center; gap:6px; }
 .forecast-chart-key i { width:24px; border-top:2px solid var(--blue); }
 .forecast-chart-key .is-prediction { border-top-style:dashed; border-color:var(--blue); }
+.forecast-chart-key .is-range { width:16px; height:10px; border-radius:2px; background:var(--color-rain-fill); border:1px solid var(--color-divider); }
 .forecast-table-disclosure summary { min-height:44px; align-content:center; cursor:pointer; color:var(--blue); font-size:14px; }
 .forecast-table-disclosure[open] summary { margin-bottom:8px; }
 .monitor .history-controls > .export-date-picker { position:relative; margin-left:auto; display:block; width:auto; }

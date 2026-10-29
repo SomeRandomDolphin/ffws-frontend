@@ -21,7 +21,7 @@ export default function ShadowForecast({ stationId, data, error, unavailable = f
   if (!data) return <p className="live-note" role="status">Memuat prakiraan…</p>;
   if (data.status !== "issued") return <><p className="live-note" role="status">{data.reason}</p>{data.observedAt && <p className="live-note">Data terakhir · {liveTime(data.observedAt)}</p>}</>;
   return <div className="shadow-forecast">
-    <div className="forecast-context"><span title={data.observedAt ? `Pembacaan terakhir: ${liveTime(data.observedAt)}` : undefined}>Acuan: {liveTime(data.origin ?? data.issuedAt ?? null)}</span></div>
+    <div className="forecast-context"><span title={data.observedAt ? `Pembacaan terakhir: ${liveTime(data.observedAt)}` : undefined}>Awal prediksi: {liveTime(data.origin ?? data.issuedAt ?? null)}</span></div>
     <div className="live-table-wrap"><table>
       <caption className="sr-only">Prakiraan tinggi muka air satu hingga lima jam</caption>
       <thead><tr><th>Waktu target</th><th>Prediksi muka air</th></tr></thead>
