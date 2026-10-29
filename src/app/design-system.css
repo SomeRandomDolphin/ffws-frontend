@@ -5,6 +5,9 @@
 .ds-select-item[data-highlighted] { background:var(--color-selection-bg); }
 .ds-select-item[data-state=checked] { color:var(--color-action); font-weight:600; }
 .ds-select-scroll { text-align:center; padding:4px; }
+.preview-history-ranges { display:flex; gap:4px; margin:12px 0; }
+.preview-history-ranges button { flex:1; min-height:44px; padding:8px; border:1px solid transparent; border-radius:6px; background:transparent; color:var(--muted); }
+.preview-history-ranges button[aria-pressed=true] { border-color:var(--color-control-border); background:var(--color-selection-bg); color:var(--blue); font-weight:600; }
 .ds-switch { width:44px; height:28px; flex-shrink:0; padding:3px; border:1px solid var(--color-control-border); border-radius:14px; background:var(--color-divider); position:relative; }
 .ds-switch::before { content:""; position:absolute; inset:-8px 0; }
 .ds-switch[data-state=checked] { background:var(--color-action); border-color:var(--color-action); }
