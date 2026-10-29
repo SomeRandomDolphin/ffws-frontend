@@ -30,7 +30,7 @@
 .legend-row small { display:block; color:var(--muted); font-size:var(--text-caption); line-height:1.5; }
 .legend-dot,.legend-level-dot { flex-shrink:0; width:16px; height:16px; border:2px solid var(--navy); outline:2px solid var(--surface); border-radius:50%; background:var(--blue); }
 .legend-dot.is-selected { box-shadow:0 0 0 5px var(--color-selection-bg); }
-.legend-details { border-top:1px solid var(--line); }
+.legend-details { border:0; }
 .legend-details summary { min-height:44px; align-content:center; cursor:pointer; font-size:var(--text-label); font-weight:500; }
 .legend-details[open] summary { margin-bottom:12px; }
 .legend-details section + section { margin-top:16px; }
