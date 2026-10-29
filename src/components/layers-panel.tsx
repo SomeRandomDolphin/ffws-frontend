@@ -15,30 +15,30 @@ export default function LayersPanel(props: Props) {
     <header className="panel-heading map-legend-heading"><button className="overlay-close" aria-label="Tutup lapisan" onClick={props.onClose}><Icon name="close" /></button><h2>Lapisan peta <Icon name="layers" /></h2></header>
 
     <section>
-      <h3><Icon name="pin" />Stasiun</h3>
+      <h3>Tampilan stasiun</h3>
       <label className="layer-switch"><span>Nama stasiun</span><Switch checked={props.active.includes("labels")} onCheckedChange={() => props.onToggle("labels")} aria-label="Nama stasiun" /></label>
       <label className="layer-switch"><span>Intensitas hujan</span><Switch checked={props.active.includes("rainfall")} onCheckedChange={() => props.onToggle("rainfall")} aria-label="Intensitas hujan" /></label>
       <label className="layer-switch"><span>Kualitas air</span><Switch checked={props.active.includes("quality")} onCheckedChange={() => props.onToggle("quality")} aria-label="Kualitas air" /></label>
     </section>
 
     <section>
-      <h3><Icon name="wave" />Hidrologi</h3>
-      <WaterwayKey />
+      <h3>Jaringan sungai</h3>
       <label className="opacity-control"><span>Opasitas <output>{Math.round(props.opacity.topology * 100)}%</output></span><input aria-label="Opasitas sungai" type="range" min="0" max="100" value={Math.round(props.opacity.topology * 100)} onChange={event => {
         const value = Number(event.target.value) / 100;
         props.onOpacity("topology", value);
         props.onOpacity("surabayaRivers", value);
       }} /></label>
+      <details className="layer-disclosure"><summary>Arti simbol sungai</summary><WaterwayKey /></details>
     </section>
 
     <section>
-      <h3><Icon name="overview" />Konteks Jawa Timur</h3>
-      <label className="layer-switch"><span>Batas kabupaten/kota</span><input type="checkbox" disabled={!props.sources.admin} checked={props.sources.admin && props.active.includes("admin")} onChange={() => props.onToggle("admin")} /></label>
-      <label className="layer-switch"><span>Sungai besar Jawa Timur</span><input type="checkbox" disabled={!props.sources.eastRivers} checked={props.sources.eastRivers && props.active.includes("regionalRivers")} onChange={() => props.onToggle("regionalRivers")} /></label>
+      <h3>Wilayah</h3>
+      <label className="layer-switch"><span>Batas kabupaten/kota</span><Switch aria-label="Batas kabupaten/kota" disabled={!props.sources.admin} checked={props.sources.admin && props.active.includes("admin")} onCheckedChange={() => props.onToggle("admin")} /></label>
+      <label className="layer-switch"><span>Sungai besar Jawa Timur</span><Switch aria-label="Sungai besar Jawa Timur" disabled={!props.sources.eastRivers} checked={props.sources.eastRivers && props.active.includes("regionalRivers")} onCheckedChange={() => props.onToggle("regionalRivers")} /></label>
     </section>
 
     <section>
-      <h3><Icon name="layers" />Peta dasar</h3>
+      <h3>Peta dasar</h3>
       <div className="basemap-options" role="group" aria-label="Pilih peta dasar">
         {basemaps.map(item => <button key={item.id} aria-pressed={props.selected === item.id} onClick={() => props.onSelect(item.id)}>
           <span className={"basemap-preview preview-" + item.id} aria-hidden="true"><i /><b>{props.selected === item.id ? "✓" : ""}</b></span>
@@ -46,11 +46,11 @@ export default function LayersPanel(props: Props) {
           <small>{item.source}</small>
         </button>)}
       </div>
-      <label className="opacity-control"><span>Opasitas <output>{Math.round(props.opacity.basemap * 100)}%</output></span><input aria-label="Opasitas peta dasar" type="range" min="0" max="100" value={Math.round(props.opacity.basemap * 100)} onChange={event => props.onOpacity("basemap", Number(event.target.value) / 100)} /></label>
+      <details className="layer-disclosure"><summary>Pengaturan opasitas</summary><label className="opacity-control"><span>Opasitas <output>{Math.round(props.opacity.basemap * 100)}%</output></span><input aria-label="Opasitas peta dasar" type="range" min="0" max="100" value={Math.round(props.opacity.basemap * 100)} onChange={event => props.onOpacity("basemap", Number(event.target.value) / 100)} /></label></details>
       {props.feedback?.state === "loading" && <p role="status">Memuat peta pilihan…</p>}
       {props.feedback?.state === "error" && <p role="status">Sumber belum tersedia. {props.feedback.active ? "Peta sebelumnya dipertahankan." : "Titik stasiun tetap tersedia."} <button className="basemap-retry" onClick={() => props.onSelect(props.feedback!.requested)}>Coba lagi</button></p>}
     </section>
 
-    <button className="reset-layer" onClick={props.onClear}>Matikan overlay lainnya</button>
+    <button className="reset-layer" onClick={props.onClear}>Matikan lapisan tambahan</button>
   </aside>;
 }

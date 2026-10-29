@@ -1,6 +1,13 @@
-.layer-browser > section { display:flex; flex-direction:column; gap:8px; padding:0 0 16px; }
+.layer-browser { gap:32px; }
+.layer-browser > section { display:flex; flex-direction:column; gap:0; padding:0; }
 .layer-browser > section:last-of-type { padding-bottom:0; border-bottom:0; }
-.layer-browser h3 { display:flex; align-items:center; gap:8px; margin:0 0 4px; font:600 var(--text-subtitle)/1.25 var(--font-sans); }
+.layer-browser h3 { display:flex; align-items:center; gap:8px; margin:0 0 12px; font:600 var(--text-label)/1.5 var(--font-sans); color:var(--muted); letter-spacing:.06em; text-transform:uppercase; }
+.layer-disclosure { margin-top:8px; }
+.layer-disclosure summary { min-height:44px; display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--muted); font-size:var(--text-label); list-style:none; }
+.layer-disclosure summary::-webkit-details-marker { display:none; }
+.layer-disclosure summary::before { content:""; width:6px; height:6px; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor; transform:rotate(-45deg); margin-right:4px; transition:transform 160ms var(--ease); }
+.layer-disclosure[open] summary::before { transform:rotate(45deg); }
+.layer-disclosure summary:hover { color:var(--blue); }
 .layer-browser h3 svg { width:18px; height:18px; color:var(--muted); }
 .layer-browser .layer-switch { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:44px; margin:0; padding:8px 0; font-size:var(--text-body); cursor:pointer; }
 .layer-browser input[type="checkbox"] { width:20px; height:20px; flex-shrink:0; margin:0; accent-color:var(--blue); }
