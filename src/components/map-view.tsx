@@ -257,6 +257,10 @@ export default function MapView(props: Props) {
     map.once("style.load", () => {
       map.addSource("surabaya-focus-mask", {type:"geojson",data:emptyGeoJSON});
       map.addSource("surabaya-focus-boundary", {type:"geojson",data:emptyGeoJSON});
+      map.addSource("welang-focus-mask", {type:"geojson",data:emptyGeoJSON});
+      map.addSource("welang-focus-boundary", {type:"geojson",data:emptyGeoJSON});
+      map.addLayer({id:"welang-focus-dim",type:"fill",source:"welang-focus-mask",paint:{"fill-color":"#172b3a","fill-opacity":latest.current.region === "welang" ? .38 : 0,"fill-opacity-transition":{duration:350}}});
+      map.addLayer({id:"welang-focus-outline",type:"line",source:"welang-focus-boundary",paint:{"line-color":"#246b91","line-width":1.5,"line-opacity":latest.current.region === "welang" ? .8 : 0,"line-opacity-transition":{duration:350}}});
       map.addLayer({id:"surabaya-focus-dim",type:"fill",source:"surabaya-focus-mask",paint:{"fill-color":"#172b3a","fill-opacity":latest.current.region === "surabaya" ? .38 : 0,"fill-opacity-transition":{duration:350}}});
       map.addLayer({id:"surabaya-focus-outline",type:"line",source:"surabaya-focus-boundary",paint:{"line-color":"#246b91","line-width":1.5,"line-opacity":latest.current.region === "surabaya" ? .8 : 0,"line-opacity-transition":{duration:350}}});
     });
@@ -274,6 +278,8 @@ export default function MapView(props: Props) {
         const boundary: FeatureCollection = {type:"FeatureCollection",features:data.assets.regencies.features.filter(feature => feature.properties?.KDPKAB === "35.78")};
         (map.getSource("surabaya-focus-mask") as GeoJSONSource | undefined)?.setData(outsideMask(boundary));
         (map.getSource("surabaya-focus-boundary") as GeoJSONSource | undefined)?.setData(boundary);
+        (map.getSource("welang-focus-mask") as GeoJSONSource | undefined)?.setData(outsideMask(data.assets.basin));
+        (map.getSource("welang-focus-boundary") as GeoJSONSource | undefined)?.setData(data.assets.basin);
         basinData.current = data.assets.basin;
         latest.current.onHydroSources(data.sources);
         if(frameAll.current) fitAll.current();
@@ -362,6 +368,8 @@ export default function MapView(props: Props) {
     const map = mapRef.current;
     if(map?.getLayer("surabaya-focus-dim")) map.setPaintProperty("surabaya-focus-dim","fill-opacity",props.region === "surabaya" ? .38 : 0);
     if(map?.getLayer("surabaya-focus-outline")) map.setPaintProperty("surabaya-focus-outline","line-opacity",props.region === "surabaya" ? .8 : 0);
+    if(map?.getLayer("welang-focus-dim")) map.setPaintProperty("welang-focus-dim","fill-opacity",props.region === "welang" ? .38 : 0);
+    if(map?.getLayer("welang-focus-outline")) map.setPaintProperty("welang-focus-outline","line-opacity",props.region === "welang" ? .8 : 0);
   }, [props.region,ready]);
   useEffect(() => { basemapController.current?.select(props.basemapRequest.id); }, [props.basemapRequest]);
   useEffect(() => {
