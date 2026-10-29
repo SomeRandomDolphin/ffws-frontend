@@ -13,4 +13,7 @@ Button supports default, outline, ghost, destructive and icon size. Use disabled
 Use id-ID formatting, WIB timestamps, two decimals for water level, integer tips, and an em dash for missing values. Never infer missing units or thresholds. Preserve sensor selection, capacity labels and raw-zero behavior.
 
 ## Migration status
-Foundation, button primitive, token alignment, reading surfaces and initial gallery are implemented. Full Select/Sheet/Command migrations, shared chart and table wrappers, responsive drawer focus management and visual regression verification remain to be completed.
+Foundation, Button and Select primitives, three station-layer Switch controls, token alignment, light reading surfaces and initial gallery are implemented. Welang and Surabaya previews share a responsive Radix dialog panel: nonmodal desktop, modal mobile. Command/search migration, remaining information panels and layer controls, shared chart/table wrappers and visual regression verification remain to be completed.
+
+## Local runtime storage
+Development monitoring data belongs in ignored .local/monitoring, never .next: production builds clean .next. The local API and worker use archive.sqlite3 in this directory. Production static output remains out/.

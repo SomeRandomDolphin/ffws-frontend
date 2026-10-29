@@ -154,13 +154,9 @@ export default function Dashboard() {
         {region === "surabaya" && !liveOpen && <div className="surabaya-stations"><details><summary>Stasiun Surabaya <span>{liveStations.length}</span></summary><div className="surabaya-station-list">{liveError && <p role="status">{liveError}</p>}{!live && !liveError && <p>Memuat pembacaan…</p>}{liveStations.map(item => <button key={item.id} onClick={() => selectLive(item)}><span>{item.name}</span><small>{liveError ? "Koneksi terputus" : liveStateLabel[item.state]} · {liveTime(item.observedAt)}</small></button>)}</div></details></div>}
         {region === "welang" && !welangDrawerOpen && <div className="welang-stations">{welangError && <p role="status" className="live-note">{welangError}</p>}{!welangArchive && !welangError && <p role="status" className="live-note">Memuat data DAS Welang…</p>}<details><summary>Stasiun DAS Welang <span>{snapshot.stations.length}</span></summary><div className="welang-station-list">{snapshot.stations.map(item => <button key={item.name} onClick={() => selectStation(item)}><span>{item.name}</span><small>{item.sourceLabel} · {Number.isFinite(item.valueM) ? `${item.valueM.toFixed(2)} m` : "—"}</small></button>)}</div></details></div>}
         {liveOpen && (
-          <aside className="live-drawer" aria-label="Detail sensor Surabaya" onKeyDown={(event) => { if (event.key === "Escape") closeLive(); }}>
-            <div className="live-drawer-topbar">
-              <strong>{liveStation?.name ?? "Detail sensor"}</strong>
-              <button ref={liveClose} className="live-close" aria-label="Tutup detail" onClick={closeLive}><span aria-hidden="true">×</span></button>
-            </div>
+          <MapPanel title={liveStation?.name ?? "Detail sensor"} onClose={closeLive}>
             {liveStation ? <LiveStationPanel station={liveStation} disconnected={!!liveError} /> : <p role="status" className="live-loading">{liveError ?? "Memuat data stasiun…"}</p>}
-          </aside>
+          </MapPanel>
         )}
         {welangDrawerOpen && station && (
           <MapPanel title={station.name} onClose={() => setWelangDrawerOpen(false)}>
