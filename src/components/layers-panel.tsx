@@ -1,6 +1,5 @@
 import Icon from "./icon";
 import { Switch } from "./ui/switch";
-import WaterwayKey from "./waterway-key";
 import { basemaps, type BasemapId, type BasemapFeedback } from "@/lib/basemap-catalog";
 import type { GeoSources } from "@/lib/geodata";
 import type { LayerKey, RegionKey } from "@/lib/types";
@@ -28,7 +27,6 @@ export default function LayersPanel(props: Props) {
         props.onOpacity("topology", value);
         props.onOpacity("surabayaRivers", value);
       }} /></label></details>
-      <details className="layer-disclosure"><summary>Arti simbol sungai</summary><WaterwayKey /></details>
     </section>
 
     <section>
