@@ -1,4 +1,10 @@
-:root { --radius:6px; --panel-radius:8px; --control-height:44px; --color-reading:#101820; --color-reading-text:#f5f8fa; --color-reading-muted:#b9c8d2; --text-reading:2.25rem; }
+:root { --radius:6px; --panel-radius:8px; --control-height:44px; --color-reading:var(--color-surface); --color-reading-text:var(--color-text); --color-reading-muted:var(--color-text-muted); --text-reading:2.25rem; }
+.ds-select-trigger { display:inline-flex; align-items:center; justify-content:space-between; gap:24px; min-height:44px; padding:10px 16px; border:1px solid var(--color-control-border); border-radius:6px; background:var(--surface); color:var(--color-text); }
+.ds-select-content { z-index:100; min-width:var(--radix-select-trigger-width); max-height:var(--radix-select-content-available-height); overflow:hidden; padding:4px; background:var(--surface); color:var(--color-text); border:1px solid var(--line); border-radius:6px; box-shadow:var(--shadow); }
+.ds-select-item { min-height:44px; display:flex; align-items:center; justify-content:space-between; gap:24px; padding:8px 12px; border-radius:4px; cursor:pointer; outline:none; }
+.ds-select-item[data-highlighted] { background:var(--color-selection-bg); }
+.ds-select-item[data-state=checked] { color:var(--color-action); font-weight:600; }
+.ds-select-scroll { text-align:center; padding:4px; }
 .ds-button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:10px 16px; border:1px solid transparent; border-radius:6px; font-weight:500; text-decoration:none; }
 .ds-button-primary { background:var(--color-action); color:white; }
 .ds-button-primary:hover { background:var(--color-action-hover); }
@@ -7,11 +13,12 @@
 .ds-button-destructive { background:var(--color-danger); color:white; }
 .ds-button-icon { width:44px; padding:10px; }
 .ds-button:disabled { opacity:.55; cursor:not-allowed; }
-.monitor .reading-panel,.live-gauge-container { background:var(--color-reading); color:var(--color-reading-text); border:1px solid #2b3945; border-radius:8px; padding:24px; }
+.monitor .reading-panel,.live-gauge-container { background:var(--color-reading); color:var(--color-reading-text); border:1px solid var(--color-divider); border-radius:8px; padding:24px; }
 .monitor .reading-panel h2,.monitor .reading-panel dd,.monitor .reading-panel .observation-primary dd,.live-gauge-container .live-water-value { color:var(--color-reading-text); }
 .monitor .reading-panel dt,.monitor .reading-panel span,.monitor .reading-panel small,.monitor .reading-panel .reading-reference,.live-gauge-container .live-meter-sub,.live-gauge-container dt { color:var(--color-reading-muted); }
-.monitor .reading-panel .reading-level-track { background:#2b3945; }
-.monitor .reading-panel .reading-level-track > div { background:#66b3dc; }
+.monitor .reading-panel .observation-primary > dd:not(.reading-level-scale),.live-gauge-container .live-water-value { color:var(--color-action); }
+.monitor .reading-panel .reading-level-track { background:var(--color-divider); }
+.monitor .reading-panel .reading-level-track > div { background:var(--color-action); }
 .monitor .reading-panel .reading-reference dd { color:var(--color-reading-text); }
 .monitor-table th { background:var(--color-bg); font-weight:600; }
 .monitor-table th,.monitor-table td { padding:14px 16px; }

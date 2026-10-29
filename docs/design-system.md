@@ -4,7 +4,7 @@
 Tailwind v4 utilities with the existing explicit CSS reset (no Preflight), Radix primitives, shadcn-compatible component configuration, IBM Plex Sans and IBM Plex Mono. CSS tokens remain in globals.css; shared presentation is in design-system.css.
 
 ## Visual rules
-Blue actions, white analytical surfaces, dark latest-reading panels for all parameters. Keep reading panels free of internal dividers. Use 4/8/12/16/24/32/48px spacing, 44px controls, 6px control radius, 8px panels. Do not use connection colors to imply hydrological danger.
+Blue actions, white analytical surfaces and light latest-reading panels for all parameters. Reading panels must not use a black background; emphasize measurements and capacity bars in blue. Keep reading panels free of internal dividers. Use 4/8/12/16/24/32/48px spacing, 44px controls, 6px control radius, 8px panels. Do not use connection colors to imply hydrological danger.
 
 ## Components
 Button supports default, outline, ghost, destructive and icon size. Use disabled and aria-busy for unavailable/loading actions. Accessible names are required for icon buttons. Use the /design-system page for a component preview.

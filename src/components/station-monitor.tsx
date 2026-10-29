@@ -13,6 +13,8 @@ import { monitoringApiFetch, monitoringApiUrl } from "@/lib/api-client";
 import { SiteFooter, WelangBrand } from "./brand";
 import LocationMap from "./location-map";
 import Icon from "./icon";
+import { Button } from "./ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import "./station-monitor.css";
 
 const time = new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", dateStyle: "medium", timeStyle: "short" });
@@ -198,9 +200,9 @@ export default function StationMonitor({ stationId, name, compact = false }: { s
     </section>
     <section className="monitor-section" aria-label="Riwayat pengamatan">
       <div className="monitor-section-heading"><h2>Riwayat pengamatan</h2></div>
-      <div className="history-controls">{channels.length > 1 && <div className="chart-sensor-select"><select aria-label="Pilih sensor grafik" value={channel ? `${channel.sensor}:${channel.metric}` : ""} onChange={event => setSelected(event.target.value)}>{channels.map(item => <option key={`${item.sensor}:${item.metric}`} value={`${item.sensor}:${item.metric}`}>{formatSensorLabel(item.sensor, name)}</option>)}</select><svg className="chart-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></div>}<div className="monitor-toggle" role="group" aria-label="Rentang riwayat">
+      <div className="history-controls">{channels.length > 1 && <Select value={channel ? `${channel.sensor}:${channel.metric}` : ""} onValueChange={setSelected}><SelectTrigger aria-label="Pilih sensor grafik"><SelectValue /></SelectTrigger><SelectContent>{channels.map(item => <SelectItem key={`${item.sensor}:${item.metric}`} value={`${item.sensor}:${item.metric}`}>{formatSensorLabel(item.sensor, name)}</SelectItem>)}</SelectContent></Select>}<div className="monitor-toggle" role="group" aria-label="Rentang riwayat">
         {[6, 24, 168].map(value => <button key={value} aria-pressed={value === hours} onClick={() => setHours(value)}>{value === 168 ? "7 hari" : `${value} jam`}</button>)}
-      </div><button className="archive-download" type="button" aria-busy={busy} disabled={busy || !station?.observedAt} onClick={() => void download()}>{busy && <span className="archive-download-spinner" aria-hidden="true" />}<span>{busy ? "Menyiapkan data…" : "Unduh data"}</span></button></div>
+      </div><Button className="archive-download" type="button" aria-busy={busy} disabled={busy || !station?.observedAt} onClick={() => void download()}>{busy && <span className="archive-download-spinner" aria-hidden="true" />}<span>{busy ? "Menyiapkan data…" : "Unduh data"}</span></Button></div>
       {downloadError && <p role="alert">{downloadError}</p>}
       {points.length ? <figure className="monitor-chart" aria-label="Grafik riwayat pengamatan"><ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={chartPoints} margin={{ top: 20, right: 8, left: 0, bottom: 8 }}><CartesianGrid stroke={chartTheme.grid} vertical={false} /><XAxis dataKey="time" type="number" domain={["dataMin", "dataMax"]} tickCount={6} minTickGap={38} tickFormatter={value => new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", ...(hours > 24 ? { day: "numeric", month: "short" } : {}) }).format(value)} tick={chartTheme.tick} axisLine={{ stroke: chartTheme.grid }} tickLine={false} />
