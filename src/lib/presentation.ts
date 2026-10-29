@@ -8,7 +8,7 @@ export const qualityColors: Record<WaterQualityStatus, string> = {
   Baik: "#28998d", Sedang: "#718093", Buruk: "#765477",
   "Belum tersedia": "#8b939b",
 };
-export const connectionColors = { live: "#19846d", delayed: "#9a7945" };
+export const connectionColors = { live: "#19846d", delayed: "#64748b" };
 export const chartTheme = {
   water: "var(--color-action)",
   rain: "var(--color-rain)",

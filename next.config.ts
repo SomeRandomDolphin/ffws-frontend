@@ -16,6 +16,14 @@ const basePath = resolveBasePath(process.env.NEXT_PUBLIC_BASE_PATH ?? "");
 const nextConfig = (phase: string): NextConfig => ({
   basePath,
   output: phase === PHASE_DEVELOPMENT_SERVER ? undefined : "export",
+  ...(phase === PHASE_DEVELOPMENT_SERVER ? {
+    async rewrites() {
+      return [{
+        source: "/monitoring-api/:path*",
+        destination: `${process.env.MONITORING_API_ORIGIN ?? "http://127.0.0.1:8000"}/:path*`,
+      }];
+    },
+  } : {}),
   devIndicators: false,
   outputFileTracingRoot: projectRoot,
   turbopack: {

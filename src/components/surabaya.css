@@ -7,6 +7,7 @@
 .live-badge { border-radius:var(--radius-badge); background:var(--color-surface-hover); color:var(--muted); padding:4px 8px; font-size:var(--text-caption); font-weight:600; }
 .live-live { background:var(--color-normal-bg); color:var(--color-normal); }
 .live-stale,.live-warning,.live-future,.live-cached { background:var(--color-warning-bg); color:var(--color-warning); }
+.live-stale { background:#f1f5f9; color:#64748b; }
 .live-warning { padding:12px 16px; border:1px solid var(--color-warning); border-radius:var(--radius); font-size:var(--text-caption); overflow-wrap:anywhere; }
 .live-gauge-container { margin:4px 0 18px; padding:0; background:transparent; }
 .live-sensor-tabs { display:flex; flex-wrap:wrap; gap:20px; margin:0 0 14px; }
@@ -64,16 +65,18 @@
 .surabaya-detail .site-footer { margin-top:auto; }
 .surabaya-stations,.welang-stations { position:absolute; right:12px; bottom:44px; z-index:5; width:min(300px,calc(100% - 24px)); background:var(--surface); border:1px solid var(--line); border-radius:var(--panel-radius); box-shadow:var(--shadow); }
 .surabaya-stations details,.welang-stations details { max-height:calc(100dvh - 144px); overflow-y:auto; }
-.surabaya-stations summary,.welang-stations summary { display:flex; align-items:center; justify-content:space-between; min-height:44px; padding:10px 12px; cursor:pointer; color:var(--navy); font-size:var(--text-body); font-weight:600; }
+.surabaya-stations summary,.welang-stations summary { display:flex; align-items:center; justify-content:space-between; min-height:44px; padding:10px 12px; cursor:pointer; background:var(--blue); color:#fff; border-radius:var(--panel-radius); font-size:var(--text-body); font-weight:600; }
+.surabaya-stations details[open] summary,.welang-stations details[open] summary { border-radius:var(--panel-radius) var(--panel-radius) 0 0; }
 .surabaya-stations summary::marker,.welang-stations summary::marker { color:var(--color-action); }
-.surabaya-stations summary span,.welang-stations summary span { font-variant-numeric:tabular-nums; color:var(--color-action); }
+.surabaya-stations summary span,.welang-stations summary span { font-variant-numeric:tabular-nums; color:#fff; }
 .surabaya-stations summary:focus-visible,.welang-stations summary:focus-visible { outline:3px solid var(--color-action); outline-offset:-3px; }
-.surabaya-station-list,.welang-station-list { padding:0 16px 12px; border-top:1px solid var(--line); }
+.surabaya-station-list,.welang-station-list { padding:0; border-top:1px solid var(--line); overflow:hidden; border-radius:0 0 var(--panel-radius) var(--panel-radius); }
 .welang-station-list { max-height:260px; overflow-y:auto; }
-.surabaya-station-list > button,.welang-station-list > button { display:grid; gap:4px; min-height:44px; width:100%; background:var(--surface); border:0; border-top:1px solid var(--line); padding:12px 0; text-align:left; color:var(--navy); }
+.surabaya-station-list > button,.welang-station-list > button { display:grid; gap:4px; min-height:44px; width:100%; background:var(--surface); border:0; border-top:1px solid var(--line); padding:12px 16px; text-align:left; color:var(--navy); cursor:pointer; }
+.surabaya-station-list > button:first-child,.welang-station-list > button:first-child { border-top:0; }
 .surabaya-station-list > button:hover,.welang-station-list > button:hover { background:var(--color-surface-hover); }
 .surabaya-station-list small,.welang-station-list small { font-size:var(--text-caption); color:var(--muted); }
-.surabaya-station-list p { font-size:var(--text-caption); overflow-wrap:anywhere; }
+.surabaya-station-list p { padding:0 16px; font-size:var(--text-caption); overflow-wrap:anywhere; }
 .live-loading { padding:16px; color:var(--muted); font-size:var(--text-body); }
 .live-pin .station-pin-dot { outline:2px dashed var(--surface); outline-offset:2px; }
 @media(max-width:700px) {

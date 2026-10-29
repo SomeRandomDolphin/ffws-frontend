@@ -8,7 +8,7 @@ import { regionPresets } from "@/lib/camera";
 import type { BasemapState } from "@/lib/basemap";
 import { createBasemapController, type BasemapId, type BasemapFeedback } from "@/lib/basemap-catalog";
 import type { OverlayOpacity, HydroSources } from "./layers-panel";
-import { emptyGeoJSON, insideBasin } from "@/lib/basin-focus";
+import { emptyGeoJSON, insideBasin, outsideMask } from "@/lib/basin-focus";
 import type { FeatureCollection } from "geojson";
 import type { GeoJSONSource } from "maplibre-gl";
 import Icon from "./icon";
@@ -82,6 +82,8 @@ export default function MapView(props: Props) {
       if (!station) return;
       popup.current?.remove();
       popupStation.current = { kind: "welang", name, menu };
+      const activeMarker = markers.current.get(name)?.getElement();
+      activeMarker?.classList.add("has-open-popup");
       const content = document.createElement("div");
       content.className = `station-popover${station.status === "Bahaya" ? " is-danger" : ""}`;
       const addText = (tag: string, text: string, className = "") => {
@@ -91,8 +93,8 @@ export default function MapView(props: Props) {
       if(basinData.current.features.length && !insideBasin([station.longitude,station.latitude],basinData.current)) addText("small","Di luar batas DAS sumber BIG","popup-time");
       addText("strong", station.name, "popup-station-name");
       addText("small", "Stasiun pemantauan · DAS Welang", "popup-kicker");
+      addText("small", station.observedAt ? liveTime(station.observedAt) : "—", "popup-time");
       addText("span", Number.isFinite(station.valueM) ? station.valueM.toFixed(2) + " m" : "Data belum tersedia", "popup-reading");
-      addText("small", `Waktu data · ${station.observedAt ? liveTime(station.observedAt) : "—"}`, "popup-time");
       addText("small", station.sourceLabel ?? "Data belum tersedia", "popup-trend");
       if (station.status === "Bahaya") {
         const alert = document.createElement("div");
@@ -122,7 +124,7 @@ export default function MapView(props: Props) {
       }
       const next = new Popup({ closeButton: true, closeOnClick: true, focusAfterOpen: false, offset: 18, maxWidth: "340px", className: "station-popup" })
         .setLngLat([station.longitude, station.latitude]).setDOMContent(content).addTo(map);
-      next.on("close", () => { if (popup.current === next) popupStation.current = null; });
+      next.on("close", () => { activeMarker?.classList.remove("has-open-popup"); if (popup.current === next) popupStation.current = null; });
       popup.current = next;
     };
     showLivePopup.current = (id, menu) => {
@@ -130,6 +132,8 @@ export default function MapView(props: Props) {
       if (!station || station.latitude === null || station.longitude === null) return;
       popup.current?.remove();
       popupStation.current = { kind: "surabaya", name: id, menu };
+      const activeMarker = liveMarkers.current.get(id)?.getElement();
+      activeMarker?.classList.add("has-open-popup");
       const content = document.createElement("div");
       content.className = "station-popover";
       const addText = (tag: string, text: string, className = "") => {
@@ -137,8 +141,26 @@ export default function MapView(props: Props) {
       };
       addText("strong", station.name, "popup-station-name");
       const primary = station.sensors.find(sensor => sensor.valueCm !== null);
-      addText("span", primary?.valueCm == null ? "—" : `${primary.valueCm.toFixed(1)} cm`, "popup-reading");
-      addText("small", `Waktu data · ${liveTime(station.observedAt)}`, "popup-time");
+      const readingHeading = document.createElement("div");
+      readingHeading.className = "popup-reading-heading";
+      const readingLabel = document.createElement("small");
+      readingLabel.className = "popup-kicker";
+      readingLabel.textContent = "Tinggi muka air";
+      const readingTime = document.createElement("small");
+      readingTime.className = "popup-time";
+      readingTime.textContent = liveTime(station.observedAt);
+      readingHeading.append(readingLabel, readingTime);
+      content.append(readingHeading);
+      const reading = document.createElement("span");
+      reading.className = "popup-reading";
+      reading.append(primary?.waterLevelCm == null ? "—" : (primary.waterLevelCm / 100).toFixed(2));
+      if (primary?.waterLevelCm != null) {
+        const unit = document.createElement("small");
+        unit.className = "popup-reading-unit";
+        unit.textContent = "m";
+        reading.append(unit);
+      }
+      content.append(reading);
       if (menu) {
         const actions = document.createElement("div"); actions.className = "popup-actions";
         const stationUrl = withBasePath("/station/" + encodeURIComponent(station.name));
@@ -160,7 +182,7 @@ export default function MapView(props: Props) {
       }
       const next = new Popup({ closeButton: true, closeOnClick: true, focusAfterOpen: false, offset: 18, maxWidth: "340px", className: "station-popup" })
         .setLngLat([station.longitude, station.latitude]).setDOMContent(content).addTo(map);
-      next.on("close", () => { if (popup.current === next) popupStation.current = null; });
+      next.on("close", () => { activeMarker?.classList.remove("has-open-popup"); if (popup.current === next) popupStation.current = null; });
       popup.current = next;
     };
     // DOM markers are independent of tile, glyph, and optional GeoJSON loading.
@@ -186,7 +208,22 @@ export default function MapView(props: Props) {
     arrangeLabels.current = () => {
       if (!container.current) return;
       const bounds = container.current.getBoundingClientRect();
-      const entries = [...markers.current.entries()].sort(([a], [b]) => Number(b === latest.current.selected) - Number(a === latest.current.selected));
+      const zoom = map.getZoom();
+      // Match ScaleControl's 100px measurement at the map's center.
+      // Its metric label changes from 20 km to 10 km below 20,000m.
+      const x = container.current.clientWidth / 2;
+      const y = container.current.clientHeight / 2;
+      const scaleMeters = map.unproject([x - 50, y]).distanceTo(map.unproject([x + 50, y]));
+      const markerOpacity = Math.max(0, Math.min(1, (20000 - scaleMeters) / 6000));
+      container.current.style.setProperty("--station-opacity", String(markerOpacity));
+      container.current.style.setProperty("--station-visibility", markerOpacity > 0 ? "visible" : "hidden");
+      if (markerOpacity === 0) popup.current?.remove();
+      const detail = Math.max(0, Math.min(1, (zoom - 7) / 4));
+      container.current.style.setProperty("--station-dot-size", `${8 + detail * 8}px`);
+      container.current.style.setProperty("--station-selected-size", `${11 + detail * 8}px`);
+      const entries = [...markers.current.entries(), ...liveMarkers.current.entries()]
+        .filter(([, marker]) => marker.getElement().style.display !== "none")
+        .sort(([, a], [, b]) => Number(b.getElement().classList.contains("is-selected")) - Number(a.getElement().classList.contains("is-selected")));
       const dots = entries.map(([, marker]) => marker.getElement().querySelector(".station-pin-dot")!.getBoundingClientRect());
       const occupied: Array<{ left: number; right: number; top: number; bottom: number }> = [...dots];
       const search = container.current.parentElement?.querySelector(".station-search");
@@ -194,14 +231,17 @@ export default function MapView(props: Props) {
       const overlaps = (a: typeof occupied[number], b: typeof occupied[number]) => a.left < b.right + 4 && a.right + 4 > b.left && a.top < b.bottom + 3 && a.bottom + 3 > b.top;
       for (const [, marker] of entries) {
         const button = marker.getElement();
+        button.inert = markerOpacity === 0;
         const label = button.querySelector<HTMLElement>(".station-pin-label")!;
-        label.style.visibility = "hidden";
+        label.style.opacity = "0";
         if (!latest.current.activeLayers.includes("labels")) continue;
+        if (zoom < 9 && document.activeElement !== button && !button.matches(":hover")) continue;
         for (const position of ["right", "left", "top", "bottom"]) {
           label.dataset.position = position;
           const rect = label.getBoundingClientRect();
           if (rect.left < bounds.left + 8 || rect.right > bounds.right - 8 || rect.top < bounds.top + 8 || rect.bottom > bounds.bottom - 30 || occupied.some((other) => overlaps(rect, other))) continue;
-          label.style.visibility = "visible";
+          const interacting = document.activeElement === button || button.matches(":hover");
+          label.style.opacity = String(interacting ? 1 : Math.max(0, Math.min(1, (zoom - 9) / .8)));
           occupied.push(rect);
           break;
         }
@@ -236,6 +276,16 @@ export default function MapView(props: Props) {
       map.addSource("surabaya-rivers", { type: "geojson", data: emptyGeoJSON });
       for (const [id, kind, width, dash] of [["surabaya-river-lines", "river", 2.8, undefined], ["surabaya-canal-lines", "canal", 1.6, [2, 2]], ["surabaya-stream-lines", "stream", 1.15, [1, 2]]] as const) map.addLayer({ id, type: "line", source: "surabaya-rivers", minzoom: 8.5, filter: ["==", ["get", "waterway"], kind], layout: { visibility: latest.current.activeLayers.includes("surabayaRivers") && latest.current.region === "surabaya" ? "visible" : "none", "line-cap": "round", "line-join": "round" }, paint: { "line-color": kind === "river" ? "#247eb5" : kind === "canal" ? "#6ea8c5" : "#4a98c5", "line-width": width, ...(dash ? { "line-dasharray": [...dash] } : {}), "line-opacity": latest.current.opacity.surabayaRivers } });
     });
+    map.once("style.load", () => {
+      map.addSource("surabaya-focus-mask", {type:"geojson",data:emptyGeoJSON});
+      map.addSource("surabaya-focus-boundary", {type:"geojson",data:emptyGeoJSON});
+      map.addSource("welang-focus-mask", {type:"geojson",data:emptyGeoJSON});
+      map.addSource("welang-focus-boundary", {type:"geojson",data:emptyGeoJSON});
+      map.addLayer({id:"welang-focus-dim",type:"fill",source:"welang-focus-mask",paint:{"fill-color":"#172b3a","fill-opacity":latest.current.region === "welang" ? .38 : 0,"fill-opacity-transition":{duration:350}}});
+      map.addLayer({id:"welang-focus-outline",type:"line",source:"welang-focus-boundary",paint:{"line-color":"#246b91","line-width":1.5,"line-opacity":latest.current.region === "welang" ? .8 : 0,"line-opacity-transition":{duration:350}}});
+      map.addLayer({id:"surabaya-focus-dim",type:"fill",source:"surabaya-focus-mask",paint:{"fill-color":"#172b3a","fill-opacity":latest.current.region === "surabaya" ? .38 : 0,"fill-opacity-transition":{duration:350}}});
+      map.addLayer({id:"surabaya-focus-outline",type:"line",source:"surabaya-focus-boundary",paint:{"line-color":"#246b91","line-width":1.5,"line-opacity":latest.current.region === "surabaya" ? .8 : 0,"line-opacity-transition":{duration:350}}});
+    });
     loadGeoAssets().then(data => {
       if(disposed) return;
       const apply = () => {
@@ -247,6 +297,11 @@ export default function MapView(props: Props) {
         (map.getSource("subdas") as GeoJSONSource | undefined)?.setData(data.assets.subdas);
         (map.getSource("basin") as GeoJSONSource | undefined)?.setData(data.assets.basin);
         geoData.current = data.assets;
+        const boundary: FeatureCollection = {type:"FeatureCollection",features:data.assets.regencies.features.filter(feature => feature.properties?.KDPKAB === "35.78")};
+        (map.getSource("surabaya-focus-mask") as GeoJSONSource | undefined)?.setData(outsideMask(boundary));
+        (map.getSource("surabaya-focus-boundary") as GeoJSONSource | undefined)?.setData(boundary);
+        (map.getSource("welang-focus-mask") as GeoJSONSource | undefined)?.setData(outsideMask(data.assets.basin));
+        (map.getSource("welang-focus-boundary") as GeoJSONSource | undefined)?.setData(data.assets.basin);
         basinData.current = data.assets.basin;
         latest.current.onHydroSources(data.sources);
         if(frameAll.current) fitAll.current();
@@ -290,7 +345,7 @@ export default function MapView(props: Props) {
       }
       marker.setLngLat([station.longitude, station.latitude]);
       const button = marker.getElement();
-      button.style.display = props.region === "surabaya" ? "grid" : "none";
+      button.style.display = props.region !== "welang" ? "grid" : "none";
       button.style.setProperty("--station-color", station.state === "live" && !props.liveDisconnected ? connectionColors.live : connectionColors.delayed);
       button.classList.toggle("is-selected", station.name === props.selected);
       button.classList.toggle("has-label", props.activeLayers.includes("labels"));
@@ -298,6 +353,7 @@ export default function MapView(props: Props) {
       button.setAttribute("aria-pressed", String(station.name === props.selected));
       button.title = `${station.name} · posisi sensor belum terverifikasi`;
     }
+    arrangeLabels.current();
   }, [props.liveStations, props.liveDisconnected, props.region, props.selected, props.activeLayers, ready]);
 
   useEffect(() => {
@@ -307,7 +363,7 @@ export default function MapView(props: Props) {
       if (!marker) return;
       marker.setLngLat([station.longitude, station.latitude]);
       const button = marker.getElement();
-      button.style.display = props.region === "welang" ? "grid" : "none";
+      button.style.display = props.region !== "surabaya" ? "grid" : "none";
       button.style.setProperty("--station-color", station.color);
       button.style.setProperty("--quality-color", qualityColors[station.quality.status]);
       button.style.setProperty("--rain-size", `${Math.min(52, 18 + (Number.isFinite(station.rainfall30mMm) ? station.rainfall30mMm : 0) * 2.4)}px`);
@@ -330,6 +386,13 @@ export default function MapView(props: Props) {
       if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", props.activeLayers.includes(key) && inRegion ? "visible" : "none");
     }
   }, [props.activeLayers, props.region, ready]);
+  useEffect(() => {
+    const map = mapRef.current;
+    if(map?.getLayer("surabaya-focus-dim")) map.setPaintProperty("surabaya-focus-dim","fill-opacity",props.region === "surabaya" ? .38 : 0);
+    if(map?.getLayer("surabaya-focus-outline")) map.setPaintProperty("surabaya-focus-outline","line-opacity",props.region === "surabaya" ? .8 : 0);
+    if(map?.getLayer("welang-focus-dim")) map.setPaintProperty("welang-focus-dim","fill-opacity",props.region === "welang" ? .38 : 0);
+    if(map?.getLayer("welang-focus-outline")) map.setPaintProperty("welang-focus-outline","line-opacity",props.region === "welang" ? .8 : 0);
+  }, [props.region,ready]);
   useEffect(() => { basemapController.current?.select(props.basemapRequest.id); }, [props.basemapRequest]);
   useEffect(() => {
     const map = mapRef.current;

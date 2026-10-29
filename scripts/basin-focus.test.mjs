@@ -4,6 +4,15 @@ import {readFileSync} from "node:fs";
 import {outsideMask,insideBasin} from "../src/lib/basin-focus.ts";
 
 const ring=(x,y,size)=>[[x,y],[x+size,y],[x+size,y+size],[x,y+size],[x,y]];
+test("Surabaya focus keeps city clear and dims outside",()=>{
+  const regencies=JSON.parse(readFileSync(new URL("../public/geo/jawa_timur_regencies.geojson",import.meta.url),"utf8"));
+  const city={type:"FeatureCollection",features:regencies.features.filter(f=>f.properties.KDPKAB==="35.78")};
+  assert.equal(city.features.length,1);
+  const mask=outsideMask(city);
+  assert.equal(insideBasin([112.75,-7.29],city),true);
+  assert.equal(insideBasin([112.75,-7.29],mask),false);
+  assert.equal(insideBasin([112.6,-7.4],mask),true);
+});
 const data={type:"FeatureCollection",features:[{type:"Feature",properties:{},geometry:{type:"MultiPolygon",coordinates:[[ring(10,10,5),ring(11,11,1)],[ring(20,20,3)]]}}]};
 test("mask complements multipart polygons and their holes",()=>{
   const mask=outsideMask(data);

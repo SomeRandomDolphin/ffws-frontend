@@ -23,6 +23,7 @@ import LiveStationPanel from "./live-station-panel";
 import { surabayaNames, surabayaStationFallback, liveStateLabel, liveTime, type LiveStation } from "@/lib/surabaya";
 import WelangStationPanel from "./welang-station-panel";
 import RegionFilter from "./region-filter";
+import { MapPanel } from "./ui/map-panel";
 
 
 type Panel = "overview" | "layers" | "legend";
@@ -116,6 +117,7 @@ export default function Dashboard() {
     setFocusRequest((current) => ({ name: item.name, sequence: (current?.sequence ?? 0) + 1 }));
   };
   const togglePanel = (panel: Panel) => {
+    setLiveOpen(false); setWelangDrawerOpen(false);
     if (window.matchMedia("(max-width: 700px)").matches) { setWelangDrawerOpen(false); }
     if (activePanel === "overview") dismissOverview();
     setActivePanel((current) => current === panel ? null : panel);
@@ -153,27 +155,19 @@ export default function Dashboard() {
         {region === "surabaya" && !liveOpen && <div className="surabaya-stations"><details><summary>Stasiun Surabaya <span>{liveStations.length}</span></summary><div className="surabaya-station-list">{liveError && <p role="status">{liveError}</p>}{!live && !liveError && <p>Memuat pembacaan…</p>}{liveStations.map(item => <button key={item.id} onClick={() => selectLive(item)}><span>{item.name}</span><small>{liveError ? "Koneksi terputus" : liveStateLabel[item.state]} · {liveTime(item.observedAt)}</small></button>)}</div></details></div>}
         {region === "welang" && !welangDrawerOpen && <div className="welang-stations">{welangError && <p role="status" className="live-note">{welangError}</p>}{!welangArchive && !welangError && <p role="status" className="live-note">Memuat data DAS Welang…</p>}<details><summary>Stasiun DAS Welang <span>{snapshot.stations.length}</span></summary><div className="welang-station-list">{snapshot.stations.map(item => <button key={item.name} onClick={() => selectStation(item)}><span>{item.name}</span><small>{item.sourceLabel} · {Number.isFinite(item.valueM) ? `${item.valueM.toFixed(2)} m` : "—"}</small></button>)}</div></details></div>}
         {liveOpen && (
-          <aside className="live-drawer" aria-label="Detail sensor Surabaya" onKeyDown={(event) => { if (event.key === "Escape") closeLive(); }}>
-            <div className="live-drawer-topbar">
-              <strong>{liveStation?.name ?? "Detail sensor"}</strong>
-              <button ref={liveClose} className="live-close" aria-label="Tutup detail" onClick={closeLive}><span aria-hidden="true">×</span></button>
-            </div>
+          <MapPanel title={liveStation?.name ?? "Detail sensor"} onClose={closeLive}>
             {liveStation ? <LiveStationPanel station={liveStation} disconnected={!!liveError} /> : <p role="status" className="live-loading">{liveError ?? "Memuat data stasiun…"}</p>}
-          </aside>
+          </MapPanel>
         )}
         {welangDrawerOpen && station && (
-          <aside className="live-drawer" aria-label={`Detail stasiun ${station.name}`} onKeyDown={(event) => { if (event.key === "Escape") setWelangDrawerOpen(false); }}>
-            <div className="live-drawer-topbar">
-              <strong>{station.name}</strong>
-              <button className="live-close" aria-label="Tutup detail" onClick={() => setWelangDrawerOpen(false)}><span aria-hidden="true">×</span></button>
-            </div>
+          <MapPanel title={station.name} onClose={() => setWelangDrawerOpen(false)}>
             {welangError && <p role="status" className="live-note">{welangError}</p>}
             <WelangStationPanel station={station} showHeading={false} />
-          </aside>
+          </MapPanel>
         )}
-        {shownPanel === "legend" && <div className={`map-legend-shell${activePanel ? "" : " is-closing"}`} inert={!activePanel} onKeyDown={(event) => { if (event.key === "Escape") closePanel(); }}><LegendPanel onClose={closePanel} activeLayers={activeLayers} sources={hydroSources} /></div>}
-        {shownPanel === "overview" && <div className={`map-legend-shell${activePanel ? "" : " is-closing"}`} inert={!activePanel} onKeyDown={(event) => { if (event.key === "Escape") closePanel(); }}><OverviewPanel onClose={closePanel} /></div>}
-        {shownPanel === "layers" && <div className={`map-legend-shell${activePanel ? "" : " is-closing"}`} inert={!activePanel} onKeyDown={(event) => { if (event.key === "Escape") closePanel(); }}><LayersPanel active={activeLayers} opacity={opacity} sources={hydroSources} region={region} selected={basemap} feedback={basemapFeedback} onSelect={chooseBasemap} onToggle={toggleLayer} onOpacity={(key,value) => setOpacity(current => ({...current,[key]:value}))} onClear={() => setActiveLayers(current => current.filter(key => key === "topology" || key === "surabayaRivers"))} onClose={closePanel} /></div>}
+        {activePanel === "legend" && <MapPanel compact title="Legenda" onClose={closePanel}><LegendPanel onClose={closePanel} activeLayers={activeLayers} sources={hydroSources} /></MapPanel>}
+        {activePanel === "overview" && <MapPanel compact title="Ringkasan" onClose={closePanel}><OverviewPanel onClose={closePanel} /></MapPanel>}
+        {activePanel === "layers" && <MapPanel compact title="Lapisan peta" onClose={closePanel}><LayersPanel active={activeLayers} opacity={opacity} sources={hydroSources} region={region} selected={basemap} feedback={basemapFeedback} onSelect={chooseBasemap} onToggle={toggleLayer} onOpacity={(key,value) => setOpacity(current => ({...current,[key]:value}))} onClear={() => setActiveLayers(current => current.filter(key => key === "topology" || key === "surabayaRivers"))} onClose={closePanel} /></MapPanel>}
       </div>
     </section>
     <SiteFooter />
