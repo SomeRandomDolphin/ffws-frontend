@@ -24,8 +24,7 @@ export default function StationPreview({ ariaLabel, className, heading, notices,
       {controls}
       <WaterLevelGauge {...gauge} />
     </div>
-    <h3 id="riwayat-sensor">{historyTitle}</h3>
-    <StationHistoryChart {...history} />
+    <StationHistoryChart {...history} title={historyTitle} />
     <h3>Prakiraan +1 sampai +5 jam</h3>
     {forecast}
     {extra}

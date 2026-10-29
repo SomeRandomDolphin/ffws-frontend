@@ -11,18 +11,19 @@ export type StationHistoryChartProps = {
   unit: "cm" | "m";
   loading: boolean;
   error?: string | null;
+  title?: string;
 };
 
 const clockFormat = new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit" });
 const timeFormat = new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
-export default function StationHistoryChart({ points, unit, loading, error }: StationHistoryChartProps) {
+export default function StationHistoryChart({ points, unit, loading, error, title = "Riwayat sensor" }: StationHistoryChartProps) {
   const [minutes,setMinutes]=useState(360);
   const window=previewHistory(points,minutes);
   const history=window.points;
 
   return <>
-    <div className="preview-history-ranges" role="group" aria-label="Rentang riwayat">{[{value:30,label:"30 menit"},{value:360,label:"6 jam"},{value:1440,label:"24 jam"}].map(item=><button key={item.value} type="button" aria-pressed={minutes===item.value} onClick={()=>setMinutes(item.value)}>{item.label}</button>)}</div>
+    <div className="preview-history-heading"><h3>{title}</h3><div className="preview-history-ranges" role="group" aria-label="Rentang riwayat">{[{value:30,label:"30 menit"},{value:360,label:"6 jam"},{value:1440,label:"24 jam"}].map(item=><button key={item.value} type="button" aria-pressed={minutes===item.value} onClick={()=>setMinutes(item.value)}>{item.label}</button>)}</div></div>
     {!!history.length && <p className="live-note">{timeFormat.format(window.start)} – {timeFormat.format(window.end)} WIB</p>}
     {error && <p className="live-note" role="status">{error}</p>}
     {history.length ? <div className="live-chart">
