@@ -23,7 +23,7 @@ export default function StationHistoryChart({ points, unit, loading, error }: St
 
   return <>
     <div className="preview-history-ranges" role="group" aria-label="Rentang riwayat">{[{value:30,label:"30 menit"},{value:360,label:"6 jam"},{value:1440,label:"24 jam"}].map(item=><button key={item.value} type="button" aria-pressed={minutes===item.value} onClick={()=>setMinutes(item.value)}>{item.label}</button>)}</div>
-    {!!history.length && <p className="live-note">{timeFormat.format(window.start)} – {timeFormat.format(window.end)} WIB · {window.interval ? `Ringkasan ${window.interval/60000} menit · rentang minimum–maksimum` : "Data asli"}</p>}
+    {!!history.length && <p className="live-note">{timeFormat.format(window.start)} – {timeFormat.format(window.end)} WIB</p>}
     {error && <p className="live-note" role="status">{error}</p>}
     {history.length ? <div className="live-chart">
       <ResponsiveContainer width="100%" height="100%">
