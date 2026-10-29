@@ -35,11 +35,11 @@ export default function LiveStationPanel({ station, disconnected = false }: { st
       capacityLabel: percentage == null ? "Data belum tersedia" : `${percentage.toFixed(0)}% Kapasitas`,
       title: `Tinggi air ${waterLevelCm !== null ? waterLevelCm.toFixed(1) : "—"} cm dari acuan ${groundReferenceCm?.toFixed(0) ?? "—"} cm`,
       details: [
-        { label: "Jarak ke Muka Air (Distance)", value: sensorDistanceCm !== null ? `${sensorDistanceCm.toFixed(1)} cm` : "—" },
-        { label: "Acuan Tinggi Sensor ke Dasar", value: `${groundReferenceCm?.toFixed(1) ?? "—"} cm` },
+        { label: "Jarak sensor ke air", value: sensorDistanceCm !== null ? `${sensorDistanceCm.toFixed(1)} cm` : "—" },
+        { label: "Kapasitas", value: `${groundReferenceCm?.toFixed(1) ?? "—"} cm` },
       ],
     }}
-    historyTitle={`Riwayat sensor ${sensor ? formatSensorLabel(sensor.id, station.name) : ""}`}
+    historyTitle="Riwayat sensor"
     history={{ points: history, unit: "cm", loading: !!sensor && !archiveHistory && !historyError, error: historyError }}
     forecast={<>{hideForecast ? <p className="live-note">{sensor?.forecast.reason ?? "Prediksi terkini tidak tersedia."}</p> : <>
       {!!sensor?.forecast.points.length && <div className="live-table-wrap"><table><caption>Acuan prediksi: {liveTime(sensor.forecast.issuedAt)} · bukan peringatan resmi</caption><thead><tr><th>Waktu berlaku</th><th>Horizon</th><th>Tinggi air</th></tr></thead><tbody>{sensor.forecast.points.map(point => <tr key={point.leadHours}><td>{liveTime(point.time)}</td><td>+{point.leadHours} jam</td><td>{point.waterLevelCm?.toFixed(1) ?? "—"} cm</td></tr>)}</tbody></table></div>}
