@@ -5,7 +5,9 @@ export type ArchiveSeries = {
   sensor: string; metric: string; unit: string; verification: string;
   measurement?: "water_level" | "distance_to_surface" | null;
   referenceCm?: number | null;
-  points: { time: string; value: number | null; source: string; waterLevelCm?: number | null; capacityPercent?: number | null }[];
+  aggregationMethod?: "median_valid_5min" | null;
+  aggregationSeconds?: number | null;
+  points: { time: string; value: number | null; source: string; waterLevelCm?: number | null; capacityPercent?: number | null; range?: [number,number] | null; waterLevelRangeCm?: [number,number] | null }[];
 };
 export type ArchiveStation = {
   sensors?: ArchiveSeries[];

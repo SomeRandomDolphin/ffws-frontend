@@ -9,5 +9,6 @@ export function calibratedSeries(series: ArchiveSeries, unit: "m" | "cm" = "m"):
   if (!isDistanceSensor(series) || series.referenceCm == null) return series;
   return { ...series, metric: "water_level", unit, points: series.points.map(point => ({ ...point,
     value: point.waterLevelCm == null ? null : point.waterLevelCm / (unit === "m" ? 100 : 1),
+    range: point.waterLevelRangeCm ? [point.waterLevelRangeCm[0] / (unit === "m" ? 100 : 1), point.waterLevelRangeCm[1] / (unit === "m" ? 100 : 1)] : null,
   })) };
 }

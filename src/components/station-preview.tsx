@@ -14,10 +14,11 @@ type StationPreviewProps = {
   historyTitle: string;
   history: StationHistoryChartProps;
   forecast: ReactNode;
+  forecastTitle?: string;
   extra: ReactNode;
 };
 
-export default function StationPreview({ ariaLabel, className, heading, notices, controls, gauge, zeroDistance = false, historyTitle, history, forecast, extra }: StationPreviewProps) {
+export default function StationPreview({ ariaLabel, className, heading, notices, controls, gauge, zeroDistance = false, historyTitle, history, forecast, forecastTitle = "Prakiraan +1 sampai +5 jam", extra }: StationPreviewProps) {
   return <section className={`live-station-panel${className ? ` ${className}` : ""}`} aria-label={ariaLabel}>
     {heading}
     {notices}
@@ -27,7 +28,7 @@ export default function StationPreview({ ariaLabel, className, heading, notices,
       {zeroDistance && <div className="preview-gauge-unavailable" role="status"><strong>Sensor Mati</strong><span>Jarak sensor ke muka air 0</span></div>}
     </div>
     <StationHistoryChart {...history} title={historyTitle} />
-    <h3>Prakiraan +1 sampai +5 jam</h3>
+    <h3>{forecastTitle}</h3>
     {forecast}
     {extra}
   </section>;

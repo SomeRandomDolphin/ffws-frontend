@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { type ArchiveSeries, type ArchiveStation, archiveStateLabel } from "@/lib/monitoring";
 import { chartTheme } from "@/lib/presentation";
+import type { Forecast } from "./shadow-forecast";
 import { previewHistory } from "@/lib/preview-history";
 import { stationInformation } from "@/lib/station-information";
 import { formatSensorLabel } from "@/lib/surabaya";
@@ -73,8 +74,25 @@ export default function StationMonitor({ stationId, name, compact = false }: { s
   const chartUnit = series?.unit === "unverified" ? "" : series?.unit;
   const chartMeasure = series ? `${label(series.metric)}${chartUnit ? ` (${chartUnit})` : ""}` : "Nilai";
   const points = series?.points.map(point => ({ ...point, time: Date.parse(point.time) })) ?? [];
-  const chartWindow = previewHistory(points, hours === 6 ? 360 : hours === 24 ? 1440 : 10080);
-  const chartPoints = chartWindow.points;
+  const chartWindow = previewHistory(points, hours === 6 ? 360 : hours === 24 ? 1440 : 10080, series?.aggregationMethod === "median_valid_5min");
+  const { data: forecast, error: forecastError } = useArchive<Forecast>(
+    currentCategory === "Muka air" && stationId.startsWith("lokasi_") && channel
+      ? `stations/${stationId}/shadow?sensor=${encodeURIComponent(channel.sensor)}` : null);
+  const predictionOrigin = forecast?.status === "issued" && forecast.origin ? Date.parse(forecast.origin) : null;
+  const hasPrediction = predictionOrigin != null && !forecastError && forecast!.points.length > 0 && forecast!.originValueCm != null && series?.metric === "water_level" && (chartUnit === "m" || chartUnit === "cm");
+  const chartPoints = chartWindow.points.map(point => ({ ...point, prediction: null as number | null }));
+  if (hasPrediction) {
+    const divisor = chartUnit === "m" ? 100 : 1;
+    const predicted = [{ time: predictionOrigin!, value: forecast!.originValueCm! / divisor },
+      ...forecast!.points.map(point => ({ time: Date.parse(point.target), value: point.trendCm / divisor }))];
+    for (const point of predicted) {
+      const existing = chartPoints.find(item => item.time === point.time);
+      if (existing) existing.prediction = point.value;
+      else chartPoints.push({ time: point.time, value: null, range: null, prediction: point.value });
+    }
+    chartPoints.sort((a, b) => a.time - b.time);
+  }
+  const predictionEnd = hasPrediction ? Math.max(...forecast!.points.map(point => Date.parse(point.target))) : chartWindow.end;
   const rawHistorySeries = rawSeries ? [rawSeries] : [];
   const tabularSeries = rawHistorySeries.map(raw => {
     const distanceReading = isDistanceSensor(raw) && raw.points.some(point => point.waterLevelCm != null);
@@ -196,13 +214,13 @@ export default function StationMonitor({ stationId, name, compact = false }: { s
       </div><div className="export-date-picker"><Button className="archive-download" type="button" aria-expanded={exportOpen} onClick={() => setExportOpen(!exportOpen)}>Unduh data</Button>{exportOpen && <div className="export-date-menu"><label>Dari tanggal<input type="date" value={fromDate} max={toDate} onChange={event => setExportStart(event.target.value)} /></label><label>Sampai tanggal<input type="date" value={toDate} min={fromDate} onChange={event => setExportEnd(event.target.value)} /></label><Button type="button" aria-busy={busy} disabled={busy || !station?.observedAt || fromDate > toDate} onClick={() => void download()}>{busy ? "Menyiapkan data…" : "Unduh Excel"}</Button></div>}</div></div>
       {downloadError && <p role="alert">{downloadError}</p>}
       {points.length ? <><figure className="monitor-chart" aria-label="Grafik riwayat pengamatan"><ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={chartPoints} margin={{ top: 20, right: 8, left: 0, bottom: 8 }}><CartesianGrid stroke={chartTheme.grid} vertical={false} /><XAxis dataKey="time" type="number" domain={["dataMin", "dataMax"]} tickCount={6} minTickGap={38} tickFormatter={value => new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", ...(hours > 24 ? { day: "numeric", month: "short" } : {}) }).format(value)} tick={chartTheme.tick} axisLine={{ stroke: chartTheme.grid }} tickLine={false} />
+        <ComposedChart data={chartPoints} margin={{ top: 24, right: 24, left: 0, bottom: 8 }}>{hasPrediction && <ReferenceArea x1={predictionOrigin!} x2={predictionEnd} fill={chartTheme.water} fillOpacity={0.05} strokeOpacity={0} />}<CartesianGrid stroke={chartTheme.grid} vertical={false} /><XAxis dataKey="time" type="number" domain={["dataMin", "dataMax"]} tickCount={6} minTickGap={38} tickFormatter={value => new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", ...(hours > 24 ? { day: "numeric", month: "short" } : {}) }).format(value)} tick={chartTheme.tick} axisLine={{ stroke: chartTheme.grid }} tickLine={false} />
           <YAxis domain={["auto", "auto"]} width={68} tickFormatter={value => Number(value).toFixed(2)} tick={chartTheme.tick} axisLine={false} tickLine={false} label={{ value: chartMeasure, angle: -90, position: "insideLeft", fill: "var(--muted)", fontSize: 11 }} /><Tooltip content={({ active, payload }) => {
             const point = payload?.[0]?.payload as (typeof chartPoints)[number] | undefined;
-            return active && point ? <div className="monitor-tooltip"><strong>{time.format(point.time)} WIB</strong>{point.range && <span>Min–maks: {point.range[0].toFixed(3)}–{point.range[1].toFixed(3)}{chartUnit ? ` ${chartUnit}` : ""}</span>}<span>{chartWindow.interval ? "Rata-rata" : chartMeasure}: {point.value == null ? "—" : `${point.value.toFixed(3)}${chartUnit ? ` ${chartUnit}` : ""}`}</span></div> : null;
+            return active && point ? <div className="monitor-tooltip"><strong>{time.format(point.time)} WIB</strong>{!hasPrediction && point.range && <span>Min–maks: {point.range[0].toFixed(3)}–{point.range[1].toFixed(3)}{chartUnit ? ` ${chartUnit}` : ""}</span>}{point.value != null && <span>{chartWindow.interval ? (series?.aggregationMethod === "median_valid_5min" ? "Pengamatan (median)" : "Pengamatan (rata-rata)") : chartMeasure}: {point.value.toFixed(3)}{chartUnit ? ` ${chartUnit}` : ""}</span>}{point.prediction != null && <span>Prediksi: {point.prediction.toFixed(3)}{chartUnit ? ` ${chartUnit}` : ""}</span>}</div> : null;
           }} />
-          {chartWindow.interval > 0 && <Area dataKey="range" name="Min–maks" fill={chartTheme.rainFill} fillOpacity={0.6} stroke="none" connectNulls={false} isAnimationActive={false} />}<Line dataKey="value" name={chartWindow.interval ? "Rata-rata" : chartMeasure} stroke={chartTheme.water} strokeWidth={2.5} dot={false} connectNulls={false} isAnimationActive={false} /></ComposedChart>
-      </ResponsiveContainer></figure>{chartWindow.interval > 0 && <p className="monitor-chart-caption">Interval rata-rata: {chartWindow.interval / 60000} menit</p>}</> : <p role="status">{historyError ? "Riwayat belum dapat dimuat. Mencoba lagi otomatis." : !sensorPoint ? "Belum ada pembacaan." : history ? "Tidak ada data pada rentang ini." : "Memuat riwayat…"}</p>}
+          {chartWindow.interval > 0 && !hasPrediction && <Area dataKey="range" name="Min–maks" fill={chartTheme.rainFill} fillOpacity={0.6} stroke="none" connectNulls={false} isAnimationActive={false} />}<Line dataKey="value" name={chartWindow.interval ? "Rata-rata" : chartMeasure} stroke={chartTheme.water} strokeWidth={2.5} dot={false} connectNulls={false} isAnimationActive={false} />{hasPrediction && <ReferenceLine x={predictionOrigin!} stroke={chartTheme.water} strokeDasharray="3 4" strokeOpacity={0.6} label={{ value: "Acuan", position: "insideTopLeft", fontSize: 11, fill: "var(--muted)" }} />}{hasPrediction && <Line dataKey="prediction" name="Prediksi" stroke={chartTheme.water} strokeWidth={2.5} strokeDasharray="6 5" dot={{ r: 5, fill: "white", stroke: chartTheme.water, strokeWidth: 2.5, strokeDasharray: "0" }} activeDot={{ r: 7, fill: chartTheme.water, stroke: "white", strokeWidth: 2, strokeDasharray: "0" }} connectNulls isAnimationActive={false} />}</ComposedChart>
+      </ResponsiveContainer></figure>{hasPrediction && <div className="monitor-chart-caption"><div className="forecast-chart-key"><span><i />Pengamatan</span><span><i className="is-prediction" />Prediksi{forecast?.historical ? " historis" : ""}</span></div><p>Acuan: {time.format(predictionOrigin!)} WIB</p></div>}{chartWindow.interval > 0 && <p className="monitor-chart-caption">Interval {series?.aggregationMethod === "median_valid_5min" ? "median" : "rata-rata"}: {chartWindow.interval / 60000} menit</p>}</> : <p role="status">{historyError ? "Riwayat belum dapat dimuat. Mencoba lagi otomatis." : !sensorPoint ? "Belum ada pembacaan." : history ? "Tidak ada data pada rentang ini." : "Memuat riwayat…"}</p>}
       <details className="history-data"><summary>Lihat data tabular</summary>
         <div className="monitor-table-wrap"><table className="monitor-table" style={{ minWidth: `${Math.max(620, 190 + tabularSeries.reduce((total, item) => total + (item.key.endsWith(":derived-water-level") ? 190 : 130), 0))}px` }}><caption>10 pengamatan terbaru tiap sensor pada rentang dipilih</caption><thead><tr><th>Waktu (WIB)</th>{tabularSeries.map(sensor => <th key={sensor.key} className={sensor.key.endsWith(":derived-water-level") ? "water-level-column" : undefined}>{sensor.sensor}</th>)}</tr></thead><tbody>{tabularRows.map(row => <tr key={row.time}><td>{time.format(row.time)}</td>{tabularSeries.map(sensor => { const value = row.values[sensor.key]; return <td key={sensor.key} className={sensor.key.endsWith(":derived-water-level") ? "water-level-column" : undefined}>{value == null ? "—" : `${value.toFixed(3)}${sensor.unit !== "unverified" ? ` ${sensor.unit}` : ""}`}</td>; })}</tr>)}</tbody></table></div>
       </details>

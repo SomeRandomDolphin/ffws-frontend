@@ -33,6 +33,24 @@
 .live-chart:has(+ .preview-history-caption) { margin-bottom:8px; }
 .preview-history-caption { display:grid; gap:4px; margin:0 0 20px; color:var(--muted); font-size:var(--text-caption); line-height:1.5; }
 .preview-history-caption p { margin:0; }
+.shadow-forecast td { font-variant-numeric:tabular-nums; white-space:nowrap; }
+.shadow-forecast td small { display:block; color:var(--muted); font-size:12px; }
+.forecast-context { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:0 0 16px; font-size:12px; line-height:1.5; color:var(--muted); }
+.shadow-forecast .live-table-wrap { border:1px solid var(--line); border-radius:6px; }
+.shadow-forecast .live-table-wrap th { padding:12px; background:var(--paper); color:var(--muted); font-size:12px; font-weight:500; }
+.shadow-forecast .live-table-wrap td { padding:14px 12px; }
+.shadow-forecast .live-table-wrap th + th,.shadow-forecast .live-table-wrap td + td { border-left:1px solid var(--line); }
+.shadow-forecast .live-table-wrap tbody tr:last-child td { border-bottom:0; }
+.forecast-target { display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; }
+.forecast-horizon { flex:0 0 30px; color:var(--muted); font-size:12px; }
+.forecast-value { color:var(--navy); font:400 14px/1.5 var(--font-sans); font-variant-numeric:tabular-nums; }
+.forecast-unit { margin-left:4px; color:var(--muted); font-size:14px; }
+.forecast-chart-key { display:flex; flex-wrap:wrap; gap:8px 20px; margin-bottom:4px; }
+.forecast-chart-key span { display:inline-flex; align-items:center; gap:6px; }
+.forecast-chart-key i { width:24px; border-top:2px solid var(--blue); }
+.forecast-chart-key .is-prediction { border-top-style:dashed; border-color:var(--blue); }
+.forecast-table-disclosure summary { min-height:44px; align-content:center; cursor:pointer; color:var(--blue); font-size:14px; }
+.forecast-table-disclosure[open] summary { margin-bottom:8px; }
 .monitor .history-controls > .export-date-picker { position:relative; margin-left:auto; display:block; width:auto; }
 .export-date-menu { position:absolute; z-index:10; top:calc(100% + 8px); right:0; width:280px; max-width:calc(100vw - 64px); padding:16px; display:grid; gap:12px; background:var(--surface); border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow); }
 .export-date-menu label { display:grid; gap:4px; color:var(--navy); font-size:14px; }
