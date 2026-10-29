@@ -1,4 +1,4 @@
-.layer-browser > section { display:flex; flex-direction:column; gap:8px; padding:0 0 16px; border-bottom:1px solid var(--line); }
+.layer-browser > section { display:flex; flex-direction:column; gap:8px; padding:0 0 16px; }
 .layer-browser > section:last-of-type { padding-bottom:0; border-bottom:0; }
 .layer-browser h3 { display:flex; align-items:center; gap:8px; margin:0 0 4px; font:600 var(--text-subtitle)/1.25 var(--font-sans); }
 .layer-browser h3 svg { width:18px; height:18px; color:var(--muted); }
