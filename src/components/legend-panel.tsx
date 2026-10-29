@@ -23,8 +23,6 @@ export default function LegendPanel({ onClose, activeLayers, sources }: { onClos
       <span className="legend-heading">Curah hujan 30 menit</span>
       <div className="legend-rain-scale"><span><i className="rain-small" /><b>Ringan</b></span><span><i className="rain-medium" /><b>Sedang</b></span><span><i className="rain-large" /><b>Lebat</b></span></div>
     </section>}
-    <details className="legend-details"><summary>Simbol & label stasiun</summary><section><div className="legend-row"><i className="legend-dot" /><div><b>Stasiun pemantauan</b><small>Klik untuk memilih stasiun</small></div></div><div className="legend-row"><i className="legend-dot is-selected" /><div><b>Stasiun terpilih</b><small>Buka Grafik untuk melihat riwayatnya</small></div></div></section>
-    <section><span className="legend-heading">Label stasiun</span><div className="legend-label-sample"><i className="legend-dot" /><span>Dhompo</span></div><small className="legend-note">Muncul saat layer "Nama stasiun" aktif</small></section></details>
     <details className="legend-details"><summary>Lapisan peta</summary><section>
       {activeLayers.includes("topology") && sources.topology && <div className="legend-row"><i className="legend-river" /><div><b>Sungai DAS Welang</b><small>OpenStreetMap contributors · ODbL</small></div></div>}
       {activeLayers.includes("surabayaRivers") && sources.surabayaRivers && <div className="legend-row"><i className="legend-river" /><div><b>Sungai Surabaya</b><small>OpenStreetMap contributors · ODbL</small></div></div>}
