@@ -2,7 +2,7 @@ import { stationGeography } from "./stations";
 import { surabayaStationFallback } from "./surabaya";
 
 const surabayaDescriptions: Record<string, string> = {
-  "Hang Tuah": "Stasiun Hang Tuah terletak di depan Kampus Universitas Hang Tuah, kawasan Keputih, Surabaya. Stasiun ini dilengkapi sensor untuk memantau tinggi muka air, curah hujan, aliran air, kecepatan dan arah angin, serta intensitas cahaya guna mendukung pengamatan kondisi lingkungan dan perairan di sekitar lokasi.",
+  "Hang Tuah": "Stasiun Hang Tuah terletak di depan Kampus Universitas Hang Tuah, kawasan Keputih, Surabaya. Stasiun ini dilengkapi sensor untuk memantau tinggi muka air, curah hujan, aliran air, kecepatan dan arah angin, kelembaban udara, tekanan udara, serta intensitas cahaya guna mendukung pengamatan kondisi lingkungan dan perairan di sekitar lokasi.",
   // Location reference: https://ebuilding.surabaya.go.id/page/gedung/ap-rpm-0034
   "Kalibokor": "Stasiun Kalibokor berada di kawasan Rumah Pompa Kalibokor, Jalan Keputih Timur, Surabaya. Dua kanal sensor, Pompa 1 dan Pompa 2, memantau tinggi muka air, sementara penakar hujan mencatat curah hujan dan jumlah tip untuk membantu pengamatan kondisi air di sekitar fasilitas.",
   "Rumah Pompa Pucang": "Stasiun ini berada di lokasi pemantauan Rumah Pompa Pucang, Surabaya, untuk mengamati kondisi muka air di sekitar fasilitas pompa. Pengukuran dilakukan melalui dua kanal sensor, Pompa 1 dan Pompa 2, serta dilengkapi pencatatan curah hujan untuk menelusuri perubahan kondisi air saat hujan.",

@@ -8,7 +8,7 @@ export type LiveStation = {
   state: "live" | "stale" | "cached" | "unavailable" | "future"; error: string | null;
   sensors: LiveSensor[];
   rainfall: { observedAt: string; values: Record<string, number | null>; error: string | null } | null;
-  telemetry: { observedAt: string | null; windir?: number | null; windavg?: number | null; windmax?: number | null; lightlevel?: number | null; flowrate?: number | null; flowvelocity?: number | null; rpm?: number | null } | null;
+  telemetry: { observedAt: string | null; windir?: number | null; windavg?: number | null; windmax?: number | null; humi?: number | null; baro?: number | null; lightlevel?: number | null; flowrate?: number | null; flowvelocity?: number | null; rpm?: number | null } | null;
 };
 export type LiveSnapshot = { generatedAt: string; unit: "cm"; verification: "unverified"; pollSeconds: number; stations: LiveStation[] };
 
@@ -32,7 +32,7 @@ export function formatSensorLabel(id: string, stationName?: string) {
       ? "Pembacaan Sensor Jarak 1"
       : "Sensor Jarak 1";
   }
-  return ({ curah_hujan: "Curah hujan", curah_hujan_1h: "Hujan 1 jam", rain1h: "Hujan 1 jam", rain24h: "Hujan 24 jam", jumlah_tip: "Jumlah tip", distance: "Sensor jarak", distance2: "Sensor jarak 2", flowrate: "Debit aliran", flowvelocity: "Kecepatan aliran", rpm: "Putaran perangkat", windavg: "Angin rata-rata", windmax: "Angin maksimum", windir: "Arah angin", lightlevel: "Tingkat cahaya", water_level: "Muka air" } as Record<string, string>)[id.toLowerCase()] ?? id;
+  return ({ curah_hujan: "Curah hujan", curah_hujan_1h: "Hujan 1 jam", rain1h: "Hujan 1 jam", rain24h: "Hujan 24 jam", jumlah_tip: "Jumlah tip", distance: "Sensor jarak", distance2: "Sensor jarak 2", flowrate: "Debit aliran", flowvelocity: "Kecepatan aliran", rpm: "Putaran perangkat", windavg: "Angin rata-rata", windmax: "Angin maksimum", windir: "Arah angin", lightlevel: "Tingkat cahaya", humi: "Kelembaban udara", baro: "Tekanan udara", water_level: "Muka air" } as Record<string, string>)[id.toLowerCase()] ?? id;
 }
 
 export function liveTime(value: string | null) {
