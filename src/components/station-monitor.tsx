@@ -41,6 +41,8 @@ const sensorDescription = (sensor: ArchiveSeries, stationName: string) => {
     windir: "Arah angin yang tercatat sesuai acuan arah pada sensor.",
     windmax: "Kecepatan angin tertinggi selama periode pencatatan alat.",
     lightlevel: "Tingkat cahaya di sekitar sensor sesuai skala pengukuran alat.",
+    humi: "Kelembaban udara di sekitar stasiun sesuai pembacaan alat.",
+    baro: "Tekanan udara di sekitar stasiun sesuai pembacaan barometer; satuan belum terverifikasi.",
   };
   if (descriptions[id]) return descriptions[id];
   if (sensor.metric === "water_level") return "Ketinggian permukaan air terhadap acuan pengukuran stasiun.";
@@ -60,9 +62,9 @@ export default function StationMonitor({ stationId, name, compact = false }: { s
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const controller = useRef<AbortController | null>(null);
   const { data: station, error } = useArchive<ArchiveStation>(`stations/${stationId}/snapshot`);
-  const group = (s: ArchiveSeries) => s.metric === "water_level" || s.metric === "distance" ? "Muka air" : s.metric === "rainfall" ? "Curah hujan" : /wind/.test(s.sensor) ? "Angin" : /light/.test(s.sensor) ? "Cahaya" : /flow|rpm/.test(s.sensor) ? "Aliran" : "Lainnya";
+  const group = (s: ArchiveSeries) => s.metric === "water_level" || s.metric === "distance" ? "Muka air" : s.metric === "rainfall" ? "Curah hujan" : s.sensor === "humi" ? "Kelembaban" : s.sensor === "baro" ? "Tekanan udara" : /wind/.test(s.sensor) ? "Angin" : /light/.test(s.sensor) ? "Cahaya" : /flow|rpm/.test(s.sensor) ? "Aliran" : "Lainnya";
   const catalog = station?.sensors ?? station?.series ?? [];
-  const categories: string[] = ["Muka air", "Curah hujan", "Aliran", "Angin", "Cahaya", "Lainnya"].filter(key => catalog.some(item => group(item) === key));
+  const categories: string[] = ["Muka air", "Curah hujan", "Aliran", "Angin", "Kelembaban", "Tekanan udara", "Cahaya", "Lainnya"].filter(key => catalog.some(item => group(item) === key));
   const currentCategory = categories.includes(category) ? category : categories[0];
   const channels = catalog.filter(s => group(s) === currentCategory);
   const channel = channels.find(s => `${s.sensor}:${s.metric}` === selected) ?? channels[0];
